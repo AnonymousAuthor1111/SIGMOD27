@@ -1,0 +1,3 @@
+setPublicSaleKey,constructor,,5 10000 5000 200,0,,false
+setPublicSaleKey,setPublicSaleKey,instance,779,0,,false
+setPublicSaleKey,setPublicSaleKey,instance,879,0,,true

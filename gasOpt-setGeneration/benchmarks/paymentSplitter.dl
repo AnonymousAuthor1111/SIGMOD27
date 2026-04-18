@@ -1,0 +1,114 @@
+// Adopted from: https://github.com/binodnp/openzeppelin-solidity/blob/master/contracts/payment/PaymentSplitter.sol
+
+// ========== State Declarations ==========
+.decl *totalShares(n: uint)
+.decl *totalReleased(n: uint)
+.decl shares(p: address, n: uint)[0]
+.decl released(p: address, n: uint)[0]
+.decl *owner(p: address)
+.decl *setupPhase(b: bool)
+
+// ========== Constructor ==========
+// Reference: constructor(address[] payees, uint256[] shares) public payable
+// Datalog cannot pass arrays; modeled as a two-phase pattern:
+//   1. constructor() initializes state + setupPhase
+//   2. recv_addPayee (onlyOwner, setupPhase only) adds payees one by one
+//   3. recv_finalizeSetup locks the payee list
+.decl constructor()
+
+// ========== addPayee (internal, setup-phase only) ==========
+// Reference: function _addPayee(address account, uint256 shares_) private
+// Guarded by onlyOwner + setupPhase to model "private, constructor-only"
+.decl recv_addPayee(p: address, n: uint)
+.decl addPayee(p: address, n: uint)
+.public recv_addPayee
+
+// ========== finalizeSetup (locks payee list) ==========
+.decl recv_finalizeSetup()
+.decl finalizeSetup()
+.public recv_finalizeSetup
+
+// ========== Transactions ==========
+.decl recv_release(p: address)
+.decl release(p: address, n: uint)
+.public recv_release
+
+// ========== View Interfaces ==========
+.public totalShares(0)
+.public totalReleased(0)
+.public shares(1)
+.public released(1)
+
+// ========== Balance Tracking ==========
+.decl totalReleaseOf(p: address, n: uint)[0]
+
+// ========== Violation Declarations ==========
+.decl *overPayment(p: address, r: uint, m: uint)
+.violation overPayment
+
+.decl *addAfterSetup()
+.violation addAfterSetup
+
+// ==================== Rules ====================
+
+// ========== Constructor Rules ==========
+owner(s) :- constructor(), msgSender(s).
+totalShares(0) :- constructor().
+totalReleased(0) :- constructor().
+setupPhase(true) :- constructor().
+
+// ========== addPayee Rules ==========
+// Reference: require(account != address(0)); require(shares_ > 0); require(_shares[account] == 0);
+// Access: onlyOwner, setupPhase only (models "private, called from constructor")
+addPayee(p, n) :- recv_addPayee(p, n), msgSender(s), owner(s),
+                  setupPhase(true), p != 0, n > 0, shares(p, m), m == 0.
+
+// Compute shares per address from addPayee
+shares(p, s) :- addPayee(p, _), s = sum n: addPayee(p, n).
+
+// Compute totalShares as sum of all addPayee shares
+totalShares(s) :- s = sum n: addPayee(_, n).
+
+// ========== finalizeSetup Rules ==========
+// Locks payee list; requires at least one payee added (totalShares > 0)
+finalizeSetup() :- recv_finalizeSetup(), msgSender(s), owner(s),
+                   setupPhase(true), totalShares(ts), ts > 0.
+setupPhase(false) :- finalizeSetup().
+
+// ========== Release Rules ==========
+// Reference: function release(address account) public
+//   require(_shares[account] > 0)
+//   totalReceived = address(this).balance + _totalReleased
+//   payment = totalReceived * _shares[account] / _totalShares - _released[account]
+//   require(payment != 0)
+//   account.transfer(payment)
+// Only allowed after setup is finalized
+release(p, n) :- recv_release(p), setupPhase(false),
+                 shares(p, sh), sh > 0,
+                 thisBalance(b), totalReleased(tr),
+                 totalShares(ts),
+                 released(p, rel),
+                 n := (b + tr) * sh / ts - rel, n >= 0.
+
+send(p, n) :- release(p, n).
+
+// ========== Released Tracking ==========
+// Initialize released to 0 for every payee (handles first-release case)
+released(p, 0) :- addPayee(p, _).
+// After releases, track cumulative released per account
+totalReleaseOf(p, s) :- release(p, _), s = sum n: release(p, n).
+released(p, s) :- totalReleaseOf(p, s).
+
+// Compute totalReleased as sum of all releases
+totalReleased(s) :- s = sum n: release(_, n).
+
+// ========== Violation Properties ==========
+
+// Property 1: no payee should receive more than their proportional share
+overPayment(p, r, m) :- released(p, r), shares(p, sh), totalShares(ts),
+                         thisBalance(b), totalReleased(tr),
+                         m := (b + tr) * sh / ts,
+                         r > m.
+
+// Property 2: addPayee should not work after setup is finalized
+addAfterSetup() :- recv_addPayee(_, _), setupPhase(false).

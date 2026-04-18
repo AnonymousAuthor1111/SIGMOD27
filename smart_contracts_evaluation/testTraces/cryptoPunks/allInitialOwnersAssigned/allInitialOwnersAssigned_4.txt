@@ -1,0 +1,2 @@
+allInitialOwnersAssigned,constructor,,,0,,false
+allInitialOwnersAssigned,allInitialOwnersAssigned,instance,,0,,true

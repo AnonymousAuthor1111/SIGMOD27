@@ -1,0 +1,4 @@
+controllerRedeem,constructor,,accounts[9],9,,false
+controllerRedeem,mint,instance,accounts[3] 768,9,,false
+controllerRedeem,controllerRedeem,instance,accounts[3] 207,9,,false
+controllerRedeem,controllerRedeem,instance,accounts[3] 238,9,,true

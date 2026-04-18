@@ -1,0 +1,3 @@
+changeFountainContractAddress,constructor,,accounts[7],6,,false
+changeFountainContractAddress,changeFountainContractAddress,instance,accounts[8],6,,false
+changeFountainContractAddress,changeFountainContractAddress,instance,accounts[8],6,,true

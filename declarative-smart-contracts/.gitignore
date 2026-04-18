@@ -1,0 +1,20 @@
+target/
+project/
+view-materialization/full-manual-bw
+view-materialization/target
+solidity/experiment
+view-materialization/experiment
+view-materialization/target
+truffle-config.js
+**/.DS_Store
+BenchmarkNew/
+
+solidity/
+
+# new contracts
+**/enjToken*
+**/enjToken*/
+**/kyberNetworkCrystal*
+**/kyberNetworkCrystal*/
+**/snt*
+**/snt*/

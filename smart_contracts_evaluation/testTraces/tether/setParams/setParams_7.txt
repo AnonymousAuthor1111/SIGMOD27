@@ -1,0 +1,3 @@
+setParams,constructor,,996,3,,false
+setParams,setParams,instance,15 35,3,,false
+setParams,setParams,instance,8 43,3,,true

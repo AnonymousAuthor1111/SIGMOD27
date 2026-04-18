@@ -1,0 +1,3 @@
+endAuctionAndSetupNonAuctionSaleInfo,constructor,,5 10000 5000 200,0,,false
+endAuctionAndSetupNonAuctionSaleInfo,endAuctionAndSetupNonAuctionSaleInfo,instance,103 153 13,0,,false
+endAuctionAndSetupNonAuctionSaleInfo,endAuctionAndSetupNonAuctionSaleInfo,instance,153 203 103,0,,true

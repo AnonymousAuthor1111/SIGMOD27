@@ -1,0 +1,3 @@
+finalize,constructor,,accounts[0] accounts[9] 0 99999999999,0,,false
+finalize,createTokens,instance,,2,105469,,false
+finalize,finalize,instance,,0,,true

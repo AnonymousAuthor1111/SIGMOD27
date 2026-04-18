@@ -1,0 +1,3 @@
+setApprovalForAll,constructor,,,0,,false
+setApprovalForAll,setApprovalForAll,instance,accounts[8] true,4,,false
+setApprovalForAll,setApprovalForAll,instance,accounts[8] false,4,,true

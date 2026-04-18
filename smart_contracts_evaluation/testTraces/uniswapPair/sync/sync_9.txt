@@ -1,0 +1,4 @@
+sync,constructor,,,0,,false
+sync,initialize,instance,accounts[5] accounts[1],0,,false
+sync,mint,instance,accounts[3] 138 104,0,,false
+sync,sync,instance,144 96,0,,true

@@ -1,0 +1,225 @@
+// Adopted from: https://etherscan.io/address/0x4a6058666cf1057eac3cd3a5a614620547559fc9#code
+
+// ========== State Declarations ==========
+.decl *owner(p: address)
+.decl *paused(p: bool)
+.decl *tokenSaleActive(b: bool)
+.decl *dead(b: bool)
+.decl *bonusDistributionAddress(p: address)
+.decl *fountainContractAddress(p: address)
+// bonusTokens inlined into constructor transfer rule
+.decl *companyTokens(n: uint)
+.decl *initialSupply(n: uint)
+.decl *totalSupply(n: uint)
+.decl balances(p: address, n: uint)[0]
+.decl allowed(p: address, s: address, n: uint)[0,1]
+
+// ========== Constructor ==========
+.decl constructor(bonusAddr: address)
+
+// ========== Ownable ==========
+.decl recv_transferOwnership(_new: address)
+.decl transferOwnership(old: address, _new: address)
+.public recv_transferOwnership
+
+// ========== Pausable ==========
+.decl recv_pause()
+.decl recv_unpause()
+.decl pause()
+.decl unpause()
+.public recv_pause
+.public recv_unpause
+
+// ========== PausableToken: ERC20 ==========
+.decl recv_transfer(to: address, a: uint)
+.decl recv_transferFrom(from: address, to: address, a: uint)
+.decl recv_approve(s: address, n: uint)
+.decl recv_increaseApproval(s: address, a: uint)
+.decl recv_decreaseApproval(s: address, a: uint)
+.decl transfer(from: address, to: address, a: uint)
+.decl transferFrom(from: address, to: address, spender: address, amount: uint)
+
+.public recv_transfer
+.public recv_transferFrom
+.public recv_approve
+.public recv_increaseApproval
+.public recv_decreaseApproval
+.public balances(1)
+.public totalSupply(0)
+.public allowed(2)
+
+// ========== Balance Tracking ==========
+.decl burn(p: address, n: uint)[0]
+.decl totalIn(p: address, n: uint)[0]
+.decl totalOut(p: address, n: uint)[0]
+.decl *burnTotal(n: uint)
+
+// ========== Allowance Tracking ==========
+.decl increaseAllowance(o: address, s: address, d: uint)
+.decl decreaseAllowance(o: address, s: address, a: uint)
+.decl allowanceTotal(o: address, s: address, m: uint)[0,1]
+.decl decreaseTotal(o: address, s: address, m: uint)[0,1]
+.decl spentTotal(o: address, s: address, m: uint)[0,1]
+
+// ========== BrickblockToken Transactions ==========
+.decl recv_toggleDead()
+.public recv_toggleDead
+.decl toggleDead(b: bool)
+
+.decl recv_changeFountainContractAddress(p: address)
+.public recv_changeFountainContractAddress
+.decl changeFountainContractAddress(p: address)
+
+.decl recv_distributeTokens(p: address, v: uint)
+.public recv_distributeTokens
+.decl distributeTokens(p: address, v: uint)
+
+.decl recv_distributeBonusTokens(p: address, v: uint)
+.public recv_distributeBonusTokens
+.decl distributeBonusTokens(p: address, v: uint)
+
+.decl recv_finalizeTokenSale()
+.public recv_finalizeTokenSale
+.decl finalizeTokenSale(burnAmount: uint)
+
+// ========== Violation Declarations ==========
+.decl *onceEndSale(b: bool)
+.decl *transferAfterEndSale()
+.violation transferAfterEndSale
+
+.decl *onceUnpaused(b: bool)
+.decl *transferBeforeUnpause()
+.violation transferBeforeUnpause
+
+.decl *noEtherTransfer()
+.violation noEtherTransfer
+
+// ==================== Rules ====================
+
+// ========== Constructor Rules ==========
+// BrickblockToken(_bonusDistributionAddress)
+// initialSupply = 500 * 10^6 (decimals omitted), bonusShare=14%, companyShare=35%
+// All tokens minted to this, bonusTokens transferred to bonusDistributionAddress
+// paused = true, tokenSaleActive = true
+owner(s) :- constructor(_), msgSender(s).
+initialSupply(a) :- constructor(_), a := 500 * 1000000.
+companyTokens(n) :- initialSupply(s), n := s * 35 / 100.
+bonusDistributionAddress(a) :- constructor(a), a != 0.
+paused(true) :- constructor(_).
+tokenSaleActive(true) :- constructor(_).
+dead(false) :- constructor(_).
+
+// Mint initialSupply to this, then transfer bonusTokens to bonusDistributionAddress
+// Inline initialSupply value (500*1000000) to avoid constructor ordering dependency
+transfer(0, t, n) :- constructor(_), this(t), n := 500 * 1000000.
+transfer(t, a, b) :- constructor(a), this(t), b := 500 * 1000000 * 14 / 100.
+
+// ========== Ownable Rules ==========
+transferOwnership(s, _new) :- recv_transferOwnership(_new),
+                              msgSender(s), owner(s), _new != 0.
+owner(_new) :- transferOwnership(_, _new).
+
+// ========== Pausable Rules ==========
+pause() :- recv_pause(), msgSender(s), owner(s), paused(false).
+paused(true) :- pause().
+unpause() :- recv_unpause(), msgSender(s), owner(s), paused(true).
+paused(false) :- unpause().
+
+// ========== PausableToken Rules ==========
+// transfer: whenNotPaused, to != 0, value <= balance
+transfer(s, r, n) :- recv_transfer(r, n), paused(false), msgSender(s),
+                     r != 0, balances(s, m), n <= m.
+
+// transferFrom: whenNotPaused, to != 0, value <= balance, value <= allowance
+transferFrom(f, r, s, n) :- recv_transferFrom(f, r, n), paused(false), r != 0,
+                            balances(f, m), n <= m,
+                            msgSender(s), allowed(f, s, a), n <= a.
+transfer(f, r, n) :- transferFrom(f, r, _, n).
+
+// ========== Balance Tracking Rules ==========
+// burn directly reduces balances (not routed through transfer, matching ref implementation)
+.decl totalBurn(p: address, n: uint)[0]
+totalBurn(p, s) :- burn(p, _), s = sum n: burn(p, n).
+totalOut(p, s) :- transfer(p, _, _), s = sum n: transfer(p, _, n).
+totalIn(p, s) :- transfer(_, p, _), s = sum n: transfer(_, p, n).
+balances(p, s) :- totalOut(p, o), totalIn(p, i), totalBurn(p, b), s := i - o - b.
+
+// ========== Total Supply Rules ==========
+burnTotal(s) :- s = sum n: burn(_, n).
+totalSupply(n) :- initialSupply(i), burnTotal(b), n := i - b.
+
+// ========== Allowance Rules ==========
+// approve (whenNotPaused): sets allowance to new value
+increaseAllowance(o, s, d) :- recv_approve(s, n), msgSender(o), paused(false),
+                              allowed(o, s, m), n > m, d := n - m.
+decreaseAllowance(o, s, d) :- recv_approve(s, n), msgSender(o), paused(false),
+                              allowed(o, s, m), n < m, d := m - n.
+
+// increaseApproval (whenNotPaused)
+increaseAllowance(o, s, n) :- recv_increaseApproval(s, n), msgSender(o), paused(false).
+
+// decreaseApproval (whenNotPaused): if subtractedValue > oldValue, set to 0
+decreaseAllowance(o, s, n) :- recv_decreaseApproval(s, n), msgSender(o), paused(false),
+                              allowed(o, s, m), m >= n.
+decreaseAllowance(o, s, m) :- recv_decreaseApproval(s, n), msgSender(o), paused(false),
+                              allowed(o, s, m), n > m.
+
+allowanceTotal(o, s, m) :- increaseAllowance(o, s, _), m = sum n: increaseAllowance(o, s, n).
+decreaseTotal(o, s, m) :- decreaseAllowance(o, s, _), m = sum n: decreaseAllowance(o, s, n).
+spentTotal(o, s, m) :- transferFrom(o, _, s, _), m = sum n: transferFrom(o, _, s, n).
+
+allowed(o, s, n) :- allowanceTotal(o, s, m), spentTotal(o, s, l), decreaseTotal(o, s, d), n := m - l - d.
+
+// ========== BrickblockToken: toggleDead ==========
+// dead = !dead, onlyOwner
+toggleDead(true) :- recv_toggleDead(), msgSender(s), owner(s), dead(false).
+toggleDead(false) :- recv_toggleDead(), msgSender(s), owner(s), dead(true).
+dead(b) :- toggleDead(b).
+
+// ========== BrickblockToken: changeFountainContractAddress ==========
+// onlyOwner, isContract (cannot verify in Datalog), addr != this, addr != owner
+changeFountainContractAddress(a) :- recv_changeFountainContractAddress(a),
+                                    msgSender(s), owner(s), this(t), a != t, a != s.
+fountainContractAddress(a) :- changeFountainContractAddress(a).
+
+// ========== BrickblockToken: distributeTokens ==========
+// onlyOwner, tokenSaleActive, contributor != 0, contributor != owner
+// supplyAvailable modifier omitted (requires dynamic balance check against 51% cap)
+distributeTokens(p, n) :- recv_distributeTokens(p, n), msgSender(s), owner(s),
+                          tokenSaleActive(true), p != 0, p != s.
+transfer(t, p, n) :- distributeTokens(p, n), this(t).
+
+// ========== BrickblockToken: distributeBonusTokens ==========
+// onlyOwner, recipient != 0, recipient != owner
+// Transfers from bonusDistributionAddress to recipient
+distributeBonusTokens(p, n) :- recv_distributeBonusTokens(p, n), msgSender(s), owner(s),
+                               p != 0, p != s,
+                               bonusDistributionAddress(a), balances(a, m), n <= m.
+transfer(a, p, n) :- distributeBonusTokens(p, n), bonusDistributionAddress(a).
+
+// ========== BrickblockToken: finalizeTokenSale ==========
+// onlyOwner, tokenSaleActive, fountainContractAddress set
+// Burns unsold tokens (balances[this] - companyTokens)
+// Sets allowed[this][fountainContractAddress] = companyTokens
+// Sets tokenSaleActive = false
+finalizeTokenSale(burnAmt) :- recv_finalizeTokenSale(), msgSender(s), owner(s),
+                       tokenSaleActive(true), fountainContractAddress(f), f != 0,
+                       this(t), balances(t, bal), companyTokens(c), burnAmt := bal - c.
+burn(t, n) :- finalizeTokenSale(n), this(t).
+increaseAllowance(t, f, c) :- finalizeTokenSale(_), this(t), fountainContractAddress(f), companyTokens(c).
+tokenSaleActive(false) :- finalizeTokenSale(_).
+
+// ========== Violation Properties ==========
+
+// Property 1: distributeTokens should not work after token sale is finalized
+onceEndSale(false) :- constructor(_).
+onceEndSale(true) :- finalizeTokenSale(_).
+transferAfterEndSale() :- recv_distributeTokens(_, _), onceEndSale(true).
+
+// Property 2: standard transfer should not work before unpause
+onceUnpaused(false) :- constructor(_).
+onceUnpaused(true) :- unpause().
+transferBeforeUnpause() :- recv_transfer(_, _), onceUnpaused(false).
+
+// Property 3: fallback function reverts - no ether transfers when dead
+noEtherTransfer() :- dead(true), paused(false).

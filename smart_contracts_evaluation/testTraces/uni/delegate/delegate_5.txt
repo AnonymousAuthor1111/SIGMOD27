@@ -1,0 +1,2 @@
+delegate,constructor,,accounts[0] 621,0,,false
+delegate,delegate,instance,accounts[1],0,,true

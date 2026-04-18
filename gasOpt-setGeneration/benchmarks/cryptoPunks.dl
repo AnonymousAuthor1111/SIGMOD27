@@ -1,0 +1,218 @@
+// Simplified CryptoPunks benchmark
+
+.decl *owner(p: address)
+
+.decl *allPunksAssigned(b: bool)
+.decl punkIndexToAddress(punkIndex: uint, o: address)[0]
+.decl balanceOf(p: address, n: uint)[0]
+.decl pendingWithdrawals(p: address, n: uint)[0]
+.decl punksOfferedForSale(punkIndex: uint, b: bool)[0]
+.decl offerSeller(punkIndex: uint, seller: address)[0]
+.decl offerMinValue(punkIndex: uint, n: uint)[0]
+.decl punkHasBid(punkIndex: uint, b: bool)[0]
+.decl bidBidder(punkIndex: uint, bidder: address)[0]
+.decl bidValue(punkIndex: uint, n: uint)[0]
+
+.decl constructor()
+
+.decl recv_allInitialOwnersAssigned()
+.decl recv_getPunk(punkIndex: uint)
+.decl recv_transferPunk(to: address, punkIndex: uint)
+.decl recv_punkNoLongerForSale(punkIndex: uint)
+.decl recv_offerPunkForSale(punkIndex: uint, minSalePriceInWei: uint)
+.decl recv_buyPunk(punkIndex: uint)
+.decl recv_enterBidForPunk(punkIndex: uint)
+.decl recv_acceptBidForPunk(punkIndex: uint, minPrice: uint)
+.decl recv_withdrawBidForPunk(punkIndex: uint)
+.decl recv_withdraw()
+
+.decl allInitialOwnersAssignedAction()
+.decl getPunkAction(to: address, punkIndex: uint)
+.decl transferPunkAction(from: address, to: address, punkIndex: uint)
+.decl punkNoLongerForSaleAction(seller: address, punkIndex: uint)
+.decl offerPunkForSaleAction(seller: address, punkIndex: uint, minSalePriceInWei: uint)
+.decl buyPunkAction(buyer: address, seller: address, punkIndex: uint, paid: uint)
+.decl enterBidAction(punkIndex: uint, bidder: address, paid: uint)
+.decl acceptBidAction(seller: address, bidder: address, punkIndex: uint, paid: uint)
+.decl withdrawBidAction(bidder: address, punkIndex: uint, paid: uint)
+.decl withdrawAction(p: address, amount: uint)
+
+.public recv_allInitialOwnersAssigned
+.public recv_getPunk
+.public recv_transferPunk
+.public recv_punkNoLongerForSale
+.public recv_offerPunkForSale
+.public recv_buyPunk
+.public recv_enterBidForPunk
+.public recv_acceptBidForPunk
+.public recv_withdrawBidForPunk
+.public recv_withdraw
+
+owner(s) :- constructor(), msgSender(s).
+
+allPunksAssigned(false) :- constructor().
+allInitialOwnersAssignedAction() :- recv_allInitialOwnersAssigned(), msgSender(s), owner(s), allPunksAssigned(false).
+allPunksAssigned(true) :- allInitialOwnersAssignedAction().
+
+getPunkAction(s, punkIndex) :- recv_getPunk(punkIndex), msgSender(s), allPunksAssigned(true),
+                                s != 0, punkIndex < 10000.
+
+transferPunkAction(from, to, punkIndex) :- recv_transferPunk(to, punkIndex), msgSender(from),
+                                           allPunksAssigned(true), from != 0, to != 0,
+                                           punkIndex < 10000, punkIndexToAddress(punkIndex, from).
+
+punkNoLongerForSaleAction(seller, punkIndex) :- recv_punkNoLongerForSale(punkIndex), msgSender(seller),
+                                                allPunksAssigned(true), seller != 0, punkIndex < 10000,
+                                                punkIndexToAddress(punkIndex, seller).
+
+offerPunkForSaleAction(seller, punkIndex, minSalePriceInWei) :- recv_offerPunkForSale(punkIndex, minSalePriceInWei),
+                                                                 msgSender(seller), allPunksAssigned(true),
+                                                                 seller != 0, punkIndex < 10000,
+                                                                 punkIndexToAddress(punkIndex, seller).
+
+buyPunkAction(buyer, seller, punkIndex, paid) :- recv_buyPunk(punkIndex), msgSender(buyer),
+                                                  allPunksAssigned(true), buyer != 0, punkIndex < 10000,
+                                                  punksOfferedForSale(punkIndex, true),
+                                                  offerSeller(punkIndex, seller), offerMinValue(punkIndex, minValue),
+                                                  punkIndexToAddress(punkIndex, seller),
+                                                  msgValue(paid), paid >= minValue.
+
+enterBidAction(punkIndex, bidder, paid) :- recv_enterBidForPunk(punkIndex), msgSender(bidder),
+                                           allPunksAssigned(true), bidder != 0, punkIndex < 10000,
+                                           punkIndexToAddress(punkIndex, ownerOfPunk),
+                                           ownerOfPunk != bidder,
+                                           punkHasBid(punkIndex, false),
+                                           msgValue(paid), paid > 0.
+
+enterBidAction(punkIndex, bidder, paid) :- recv_enterBidForPunk(punkIndex), msgSender(bidder),
+                                           allPunksAssigned(true), bidder != 0, punkIndex < 10000,
+                                           punkIndexToAddress(punkIndex, ownerOfPunk),
+                                           ownerOfPunk != bidder,
+                                           punkHasBid(punkIndex, true), bidValue(punkIndex, existing),
+                                           msgValue(paid), paid > existing.
+
+acceptBidAction(seller, bidder, punkIndex, paid) :- recv_acceptBidForPunk(punkIndex, minPrice),
+                                                     msgSender(seller), allPunksAssigned(true),
+                                                     seller != 0, bidder != 0, punkIndex < 10000,
+                                                     punkIndexToAddress(punkIndex, seller),
+                                                     punkHasBid(punkIndex, true), bidBidder(punkIndex, bidder),
+                                                     bidValue(punkIndex, paid), paid >= minPrice.
+
+withdrawBidAction(bidder, punkIndex, paid) :- recv_withdrawBidForPunk(punkIndex), msgSender(bidder),
+                                              allPunksAssigned(true), bidder != 0, punkIndex < 10000,
+                                              punkHasBid(punkIndex, true), bidBidder(punkIndex, bidder),
+                                              bidValue(punkIndex, paid).
+
+withdrawAction(p, amount) :- recv_withdraw(), msgSender(p), allPunksAssigned(true),
+                             p != 0, pendingWithdrawals(p, amount), amount > 0.
+
+.decl initialBalance(p: address, n: uint)
+.decl totalInitial(p: address, n: uint)[0]
+.decl totalClaimed(p: address, n: uint)[0]
+.decl totalTransferOut(p: address, n: uint)[0]
+.decl totalTransferIn(p: address, n: uint)[0]
+.decl totalBoughtIn(p: address, n: uint)[0]
+.decl totalSoldOut(p: address, n: uint)[0]
+.decl totalAcceptedIn(p: address, n: uint)[0]
+.decl totalAcceptedOut(p: address, n: uint)[0]
+
+initialBalance(p, 0) :- getPunkAction(p, _).
+initialBalance(p, 0) :- transferPunkAction(p, _, _).
+initialBalance(p, 0) :- transferPunkAction(_, p, _).
+initialBalance(p, 0) :- buyPunkAction(p, _, _, _).
+initialBalance(p, 0) :- buyPunkAction(_, p, _, _).
+initialBalance(p, 0) :- acceptBidAction(p, _, _, _).
+initialBalance(p, 0) :- acceptBidAction(_, p, _, _).
+
+totalInitial(p, s) :- initialBalance(p, _), s = sum n: initialBalance(p, n).
+totalClaimed(p, s) :- getPunkAction(p, _), s = count: getPunkAction(p, _).
+totalTransferOut(p, s) :- transferPunkAction(p, _, _), s = count: transferPunkAction(p, _, _).
+totalTransferIn(p, s) :- transferPunkAction(_, p, _), s = count: transferPunkAction(_, p, _).
+totalBoughtIn(p, s) :- buyPunkAction(p, _, _, _), s = count: buyPunkAction(p, _, _, _).
+totalSoldOut(p, s) :- buyPunkAction(_, p, _, _), s = count: buyPunkAction(_, p, _, _).
+totalAcceptedIn(p, s) :- acceptBidAction(_, p, _, _), s = count: acceptBidAction(_, p, _, _).
+totalAcceptedOut(p, s) :- acceptBidAction(p, _, _, _), s = count: acceptBidAction(p, _, _, _).
+
+balanceOf(p, s) :- totalInitial(p, i), totalClaimed(p, c), totalTransferOut(p, to), totalTransferIn(p, ti),
+                   totalBoughtIn(p, bi), totalSoldOut(p, so), totalAcceptedIn(p, ai), totalAcceptedOut(p, ao),
+                   s := ((((i + c) + ti) + bi) + ai) - (to + so + ao).
+
+punkIndexToAddress(punkIndex, to) :- getPunkAction(to, punkIndex).
+punkIndexToAddress(punkIndex, to) :- transferPunkAction(_, to, punkIndex).
+punkIndexToAddress(punkIndex, to) :- buyPunkAction(to, _, punkIndex, _).
+punkIndexToAddress(punkIndex, to) :- acceptBidAction(_, to, punkIndex, _).
+
+.decl touchedOffer(punkIndex: uint)
+touchedOffer(punkIndex) :- getPunkAction(_, punkIndex).
+touchedOffer(punkIndex) :- transferPunkAction(_, _, punkIndex).
+touchedOffer(punkIndex) :- buyPunkAction(_, _, punkIndex, _).
+touchedOffer(punkIndex) :- acceptBidAction(_, _, punkIndex, _).
+touchedOffer(punkIndex) :- punkNoLongerForSaleAction(_, punkIndex).
+touchedOffer(punkIndex) :- offerPunkForSaleAction(_, punkIndex, _).
+
+punksOfferedForSale(punkIndex, false) :- touchedOffer(punkIndex).
+punksOfferedForSale(punkIndex, true) :- offerPunkForSaleAction(_, punkIndex, _).
+punksOfferedForSale(punkIndex, false) :- punkNoLongerForSaleAction(_, punkIndex).
+punksOfferedForSale(punkIndex, false) :- transferPunkAction(_, _, punkIndex).
+punksOfferedForSale(punkIndex, false) :- buyPunkAction(_, _, punkIndex, _).
+punksOfferedForSale(punkIndex, false) :- acceptBidAction(_, _, punkIndex, _).
+
+offerSeller(punkIndex, 0) :- touchedOffer(punkIndex).
+offerSeller(punkIndex, seller) :- offerPunkForSaleAction(seller, punkIndex, _).
+offerSeller(punkIndex, 0) :- punkNoLongerForSaleAction(_, punkIndex).
+offerSeller(punkIndex, 0) :- transferPunkAction(_, _, punkIndex).
+offerSeller(punkIndex, 0) :- buyPunkAction(_, _, punkIndex, _).
+offerSeller(punkIndex, 0) :- acceptBidAction(_, _, punkIndex, _).
+
+offerMinValue(punkIndex, 0) :- touchedOffer(punkIndex).
+offerMinValue(punkIndex, minValue) :- offerPunkForSaleAction(_, punkIndex, minValue).
+offerMinValue(punkIndex, 0) :- punkNoLongerForSaleAction(_, punkIndex).
+offerMinValue(punkIndex, 0) :- transferPunkAction(_, _, punkIndex).
+offerMinValue(punkIndex, 0) :- buyPunkAction(_, _, punkIndex, _).
+offerMinValue(punkIndex, 0) :- acceptBidAction(_, _, punkIndex, _).
+
+.decl touchedBid(punkIndex: uint)
+touchedBid(punkIndex) :- getPunkAction(_, punkIndex).
+touchedBid(punkIndex) :- enterBidAction(punkIndex, _, _).
+touchedBid(punkIndex) :- buyPunkAction(_, _, punkIndex, _).
+touchedBid(punkIndex) :- acceptBidAction(_, _, punkIndex, _).
+touchedBid(punkIndex) :- withdrawBidAction(_, punkIndex, _).
+
+punkHasBid(punkIndex, false) :- touchedBid(punkIndex).
+punkHasBid(punkIndex, true) :- enterBidAction(punkIndex, _, _).
+punkHasBid(punkIndex, false) :- buyPunkAction(_, _, punkIndex, _).
+punkHasBid(punkIndex, false) :- acceptBidAction(_, _, punkIndex, _).
+punkHasBid(punkIndex, false) :- withdrawBidAction(_, punkIndex, _).
+
+bidBidder(punkIndex, 0) :- touchedBid(punkIndex).
+bidBidder(punkIndex, bidder) :- enterBidAction(punkIndex, bidder, _).
+bidBidder(punkIndex, 0) :- buyPunkAction(_, _, punkIndex, _).
+bidBidder(punkIndex, 0) :- acceptBidAction(_, _, punkIndex, _).
+bidBidder(punkIndex, 0) :- withdrawBidAction(_, punkIndex, _).
+
+bidValue(punkIndex, 0) :- touchedBid(punkIndex).
+bidValue(punkIndex, value) :- enterBidAction(punkIndex, _, value).
+bidValue(punkIndex, 0) :- buyPunkAction(_, _, punkIndex, _).
+bidValue(punkIndex, 0) :- acceptBidAction(_, _, punkIndex, _).
+bidValue(punkIndex, 0) :- withdrawBidAction(_, punkIndex, _).
+
+.decl pendingCredit(p: address, n: uint)
+.decl pendingDebit(p: address, n: uint)
+.decl initialPending(p: address, n: uint)
+.decl totalPendingCredit(p: address, n: uint)[0]
+.decl totalPendingDebit(p: address, n: uint)[0]
+
+pendingCredit(seller, paid) :- buyPunkAction(_, seller, _, paid).
+
+pendingDebit(p, amount) :- withdrawAction(p, amount).
+
+initialPending(p, 0) :- pendingCredit(p, _).
+initialPending(p, 0) :- pendingDebit(p, _).
+
+totalPendingCredit(p, s) :- pendingCredit(p, _), s = sum n: pendingCredit(p, n).
+totalPendingDebit(p, s) :- pendingDebit(p, _), s = sum n: pendingDebit(p, n).
+pendingWithdrawals(p, s) :- initialPending(p, i), totalPendingCredit(p, c), totalPendingDebit(p, d),
+                            s := (i + c) - d.
+
+send(p, amount) :- withdrawAction(p, amount).
+send(p, amount) :- withdrawBidAction(p, _, amount).

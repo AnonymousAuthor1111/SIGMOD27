@@ -1,0 +1,8 @@
+totalSupply,allowanceTotal,decreaseAllowanceTotal,paused,spentTotal,balanceOf,owner,isPauser,totalBalances,,allowance
+allowance,paused,balanceOf,owner,isPauser,totalBalances,allBurn,allMint,,totalSupply
+allowance,totalOut,paused,totalMint,totalBalances,owner,isPauser,totalIn,totalBurn,allBurn,allMint,,totalSupply,balanceOf
+totalSupply,allowanceTotal,totalOut,paused,totalBalances,totalMint,spentTotal,owner,isPauser,decreaseAllowanceTotal,totalIn,totalBurn,,balanceOf,allowance
+totalSupply,paused,balanceOf,owner,isPauser,totalBalances,allowance,
+totalSupply,totalOut,paused,totalMint,totalBalances,owner,isPauser,totalIn,totalBurn,allowance,,balanceOf
+allowanceTotal,decreaseAllowanceTotal,totalOut,paused,totalBalances,totalMint,spentTotal,owner,isPauser,totalIn,totalBurn,allBurn,allMint,,totalSupply,balanceOf,allowance
+allowanceTotal,decreaseAllowanceTotal,paused,spentTotal,balanceOf,owner,isPauser,totalBalances,allBurn,allMint,,totalSupply,allowance

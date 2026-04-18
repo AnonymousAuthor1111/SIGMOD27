@@ -1,0 +1,3 @@
+close,constructor,,10000 accounts[6] 9999999999,0,,false
+close,invest,instance,,2,10000,,false
+close,close,instance,,0,,true

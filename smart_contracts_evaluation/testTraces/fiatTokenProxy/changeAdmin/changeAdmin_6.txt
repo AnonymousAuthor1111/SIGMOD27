@@ -1,0 +1,3 @@
+changeAdmin,constructor,,accounts[6],4,,false
+changeAdmin,changeAdmin,instance,accounts[2],4,,false
+changeAdmin,changeAdmin,instance,accounts[5],2,,true

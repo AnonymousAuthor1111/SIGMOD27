@@ -1,0 +1,5 @@
+transferFrom,constructor,,1 2,1,,false
+transferFrom,mint,instance,692 4671028319355864,7,,false
+transferFrom,approve,instance,accounts[4] 464,7,,false
+transferFrom,transferFrom,instance,accounts[7] accounts[3] 30,4,,false
+transferFrom,transferFrom,instance,accounts[7] accounts[3] 69,4,,true

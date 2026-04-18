@@ -1,0 +1,4 @@
+totalIn,allowanceTotal,totalMint,totalSupply,totalOut,maxUint,totalBalances,spentTotal,decreaseTotal,,allowance,balanceOf
+totalIn,totalMint,allowance,totalSupply,totalOut,maxUint,totalBalances,,balanceOf
+allowanceTotal,totalSupply,balanceOf,maxUint,totalBalances,spentTotal,decreaseTotal,,allowance
+allowance,totalSupply,balanceOf,maxUint,totalBalances,

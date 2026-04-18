@@ -1,0 +1,13 @@
+#body,head,ruleId,isAgg,isTx
+msgSender,upgradeTo,0,false,true
+implementation,upgradeTo,0,false,true
+proxyOwner,upgradeTo,0,false,true
+transferProxyOwnership,pendingProxyOwner,1,false,false
+upgradeTo,implementation,3,false,false
+msgSender,claimProxyOwnership,5,false,true
+pendingProxyOwner,claimProxyOwnership,5,false,true
+proxyOwner,zeroOwner,6,false,false
+msgSender,transferProxyOwnership,7,false,true
+proxyOwner,transferProxyOwnership,7,false,true
+claimProxyOwnership,pendingProxyOwner,8,false,false
+claimProxyOwnership,proxyOwner,9,false,false

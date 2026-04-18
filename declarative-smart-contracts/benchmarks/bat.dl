@@ -1,0 +1,147 @@
+// BAT - Basic Attention Token
+// Adopted from: https://etherscan.io/token/0x0D8775F648430679A709E98d2b0Cb6250d2887EF
+
+// State
+.decl *ethFundDeposit(p: address)
+.decl *batFundDeposit(p: address)
+.decl *isFinalized(b: bool)
+.decl *fundingStartBlock(n: uint)
+.decl *fundingEndBlock(n: uint)
+.decl *totalSupply(n: uint)
+.decl balanceOf(p: address, n: uint)[0]
+.decl allowance(p: address, s: address, n: uint)[0,1]
+.decl *tokenExchangeRate(r: uint)
+.decl *tokenCreationCap(n: uint)
+.decl *tokenCreationMin(n: uint)
+.decl *batFundAmt(n: uint)
+
+// Constructor
+.decl constructor(ethFund: address, batFund: address, startBlock: uint, endBlock: uint)
+
+// ERC20 Transactions
+.decl transfer(from: address, to: address, amount: uint)
+.decl recv_transfer(to: address, amount: uint)
+.decl recv_transferFrom(from: address, to: address, amount: uint)
+.decl transferFrom(from: address, to: address, spender: address, amount: uint)
+.decl increaseAllowance(p: address, s: address, n: uint)
+.decl decreaseAllowance(p: address, s: address, n: uint)
+.decl recv_approve(s: address, n: uint)
+
+// BAT-specific Transactions
+.decl recv_createTokens()
+.decl createTokens(p: address, ethAmt: uint)
+.decl recv_finalize()
+.decl finalize()
+.decl recv_refund()
+.decl refund(p: address, batVal: uint)
+
+// Internal
+.decl mint(p: address, amount: uint)
+.decl burn(p: address, amount: uint)
+.decl canFinalize()
+
+// Interfaces
+.public recv_transfer
+.public recv_transferFrom
+.public recv_approve
+.public recv_createTokens
+.public recv_finalize
+.public recv_refund
+.public balanceOf(1)
+.public totalSupply(0)
+.public allowance(2)
+.public isFinalized(0)
+
+// ---- Constructor ----
+ethFundDeposit(e) :- constructor(e, _, _, _).
+batFundDeposit(b) :- constructor(_, b, _, _).
+fundingStartBlock(s) :- constructor(_, _, s, _).
+fundingEndBlock(e) :- constructor(_, _, _, e).
+isFinalized(false) :- constructor(_, _, _, _).
+tokenExchangeRate(n) :- constructor(_, _, _, _), n:=6400.
+tokenCreationCap(n) :- constructor(_, _, _, _), n:=1500000000.
+tokenCreationMin(n) :- constructor(_, _, _, _), n:=675000000.
+batFundAmt(n) :- constructor(_, _, _, _), n:=500000000.
+
+// Initial allocation: batFundDeposit receives batFund tokens
+mint(b, n) :- constructor(_, b, _, _), batFundAmt(n).
+
+// ---- ERC20 transfer ----
+transfer(s, r, n) :- recv_transfer(r, n), msgSender(s), balanceOf(s, m), n <= m, n > 0.
+
+// ---- ERC20 transferFrom ----
+transferFrom(o, r, s, n) :- recv_transferFrom(o, r, n), n > 0,
+    balanceOf(o, m), m >= n,
+    msgSender(s), allowance(o, s, k), k >= n.
+transfer(o, r, n) :- transferFrom(o, r, _, n).
+
+// ---- ERC20 approve ----
+// approve sets allowance to new value: model via increase/decrease delta
+increaseAllowance(o, s, d) :- recv_approve(s, n), msgSender(o), allowance(o, s, m), n > m, d := n - m.
+decreaseAllowance(o, s, d) :- recv_approve(s, n), msgSender(o), allowance(o, s, m), n < m, d := m - n.
+
+.decl allowanceTotal(o: address, s: address, m: uint)[0,1]
+.decl decreaseTotal(o: address, s: address, m: uint)[0,1]
+.decl spentTotal(o: address, s: address, m: uint)[0,1]
+allowanceTotal(o, s, m) :- increaseAllowance(o, s, _), m = sum n: increaseAllowance(o, s, n).
+decreaseTotal(o, s, m) :- decreaseAllowance(o, s, _), m = sum n: decreaseAllowance(o, s, n).
+spentTotal(o, s, m) :- transferFrom(o, _, s, _), m = sum n: transferFrom(o, _, s, n).
+allowance(o, s, n) :- allowanceTotal(o, s, m), spentTotal(o, s, l), decreaseTotal(o, s, d), n := m - l - d.
+
+// ---- Balance computation ----
+.decl totalMint(p: address, n: uint)[0]
+.decl totalBurn(p: address, n: uint)[0]
+.decl totalOut(p: address, n: uint)[0]
+.decl totalIn(p: address, n: uint)[0]
+totalOut(p, s) :- transfer(p, _, _), s = sum n: transfer(p, _, n).
+totalIn(p, s) :- transfer(_, p, _), s = sum n: transfer(_, p, n).
+totalMint(p, s) :- mint(p, _), s = sum n: mint(p, n).
+totalBurn(p, s) :- burn(p, _), s = sum n: burn(p, n).
+balanceOf(p, s) :- totalMint(p, n), totalBurn(p, m), totalOut(p, o), totalIn(p, i), s := n + i - m - o.
+
+.decl *allMint(n: uint)
+.decl *allBurn(n: uint)
+allMint(s) :- s = sum n: mint(_, n).
+allBurn(s) :- s = sum n: burn(_, n).
+totalSupply(n) :- allMint(m), allBurn(b), n := m - b.
+
+// ---- createTokens (crowdsale) ----
+createTokens(p, v) :- recv_createTokens(), msgSender(p), msgValue(v), v > 0,
+    isFinalized(false),
+    now(t), fundingStartBlock(s), t >= s, fundingEndBlock(e), t <= e,
+    tokenExchangeRate(r), totalSupply(ts), tokenCreationCap(cap),
+    v * r + ts <= cap.
+mint(p, n) :- createTokens(p, v), tokenExchangeRate(r), n := v * r.
+
+// ---- finalize ----
+canFinalize() :- now(t), fundingEndBlock(e), t > e.
+canFinalize() :- totalSupply(ts), tokenCreationCap(cap), ts == cap.
+
+finalize() :- recv_finalize(), msgSender(s), ethFundDeposit(s),
+    isFinalized(false),
+    totalSupply(ts), tokenCreationMin(min), ts >= min,
+    canFinalize().
+isFinalized(true) :- finalize().
+
+.decl *totalEthRaised(n: uint)
+totalEthRaised(0) :- constructor(_, _, _, _).
+totalEthRaised(s) :- s = sum v: createTokens(_, v).
+send(p, n) :- finalize(), ethFundDeposit(p), totalEthRaised(n).
+
+// ---- refund ----
+refund(p, batVal) :- recv_refund(), msgSender(p),
+    isFinalized(false),
+    now(t), fundingEndBlock(e), t > e,
+    totalSupply(ts), tokenCreationMin(min), ts < min,
+    batFundDeposit(b), p != b,
+    balanceOf(p, batVal), batVal > 0.
+burn(p, n) :- refund(p, n).
+send(p, ethVal) :- refund(p, batVal), tokenExchangeRate(r), ethVal := batVal / r.
+
+// ---- Properties ----
+.decl *totalBalances(m: uint)
+.decl *unequalBalance(s: uint, n: uint)
+.violation unequalBalance
+totalBalances(0) :- constructor(_, _, _, _).
+totalBalances(s) :- s = sum n: balanceOf(_, n).
+unequalBalance(s, n) :- totalBalances(s), totalSupply(n), s != n.

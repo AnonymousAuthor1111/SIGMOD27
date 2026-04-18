@@ -1,0 +1,3 @@
+deny,constructor,,1,0,,false
+deny,rely,instance,accounts[1],0,,false
+deny,deny,instance,accounts[1],0,,true

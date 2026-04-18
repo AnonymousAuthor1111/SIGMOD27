@@ -1,0 +1,3 @@
+mint,constructor,,,0,,false
+mint,mint,instance,accounts[1] 100,0,,false
+mint,mint,instance,accounts[1] 1100,0,,true

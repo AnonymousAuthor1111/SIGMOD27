@@ -1,0 +1,5 @@
+transferFrom,constructor,,accounts[8] accounts[1] 0 99999999999,8,,false
+transferFrom,createTokens,instance,,6,1,,false
+transferFrom,approve,instance,accounts[5] 4846,6,,false
+transferFrom,transferFrom,instance,accounts[6] accounts[2] 288,5,,false
+transferFrom,transferFrom,instance,accounts[6] accounts[2] 86,5,,true

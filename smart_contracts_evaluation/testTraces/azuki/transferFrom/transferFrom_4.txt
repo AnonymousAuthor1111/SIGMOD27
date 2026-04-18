@@ -1,0 +1,5 @@
+transferFrom,constructor,,5 10000 5000 200,0,,false
+transferFrom,mintToken,instance,accounts[1] 240,0,,false
+transferFrom,setApprovalForAll,instance,accounts[5] true,1,,false
+transferFrom,transferFrom,instance,accounts[1] accounts[7] 240,5,,false
+transferFrom,transferFrom,instance,accounts[7] accounts[8] 240,7,,true

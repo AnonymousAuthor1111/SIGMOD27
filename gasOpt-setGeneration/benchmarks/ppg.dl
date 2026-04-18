@@ -1,0 +1,74 @@
+// Simplified Pudgy Penguins
+
+.decl *owner(p: address)
+.decl *creatorAddress(p: address)
+.decl *devAddress(p: address)
+.decl *MAX_ELEMENTS(n: uint)
+.decl *PRICE(n: uint)
+.decl *MAX_BY_MINT(n: uint)
+
+.decl *paused(b: bool)
+.decl *baseURIMarker(n: uint)
+.decl balanceOf(p: address, n: uint)[0]
+
+.decl constructor(baseURI: uint, creator: address, dev: address)
+
+.decl recv_pause(val: bool)
+.decl recv_setBaseURI(baseURI: uint)
+.decl recv_mint(to: address, count: uint)
+.decl recv_withdrawAll()
+
+.decl pauseAction(val: bool)
+.decl setBaseURIAction(baseURI: uint)
+.decl mintAction(to: address, minted: uint, paid: uint)
+.decl withdrawDev(to: address, amount: uint)
+.decl withdrawCreator(to: address, amount: uint)
+
+.public recv_pause
+.public recv_setBaseURI
+.public recv_mint
+.public recv_withdrawAll
+.public paused(0)
+.public baseURIMarker(0)
+.public balanceOf(1)
+
+owner(s) :- constructor(_, _, _), msgSender(s).
+creatorAddress(c) :- constructor(_, c, _).
+devAddress(d) :- constructor(_, _, d).
+MAX_ELEMENTS(8888) :- constructor(_, _, _).
+PRICE(30000000000000000) :- constructor(_, _, _).
+MAX_BY_MINT(20) :- constructor(_, _, _).
+
+paused(true) :- constructor(_, _, _).
+pauseAction(v) :- recv_pause(v), msgSender(s), owner(s).
+paused(v) :- pauseAction(v).
+
+baseURIMarker(b) :- constructor(b, _, _).
+setBaseURIAction(b) :- recv_setBaseURI(b), msgSender(s), owner(s).
+baseURIMarker(b) :- setBaseURIAction(b).
+
+mintAction(to, n, v) :- recv_mint(to, n), msgSender(s), owner(s),
+                        MAX_BY_MINT(mm), PRICE(p),
+                        n <= mm,
+                        msgValue(v), v >= p * n.
+
+mintAction(to, n, v) :- recv_mint(to, n), msgSender(s), owner(o), s != o,
+                        paused(false),
+                        MAX_BY_MINT(mm), PRICE(p),
+                        n <= mm,
+                        msgValue(v), v >= p * n.
+
+.decl initialBalance(p: address, n: uint)
+.decl totalInitial(p: address, n: uint)[0]
+.decl totalMintedBy(p: address, n: uint)[0]
+initialBalance(p, 0) :- mintAction(p, _, _).
+totalInitial(p, s) :- initialBalance(p, _), s = sum n: initialBalance(p, n).
+totalMintedBy(p, s) :- mintAction(p, _, _), s = sum n: mintAction(p, n, _).
+balanceOf(p, s) :- totalInitial(p, i), totalMintedBy(p, m), s := i + m.
+
+// Keep withdrawAll benchmarkable as an owner-only payout action without
+// full contract ETH accounting.
+withdrawDev(d, 35) :- recv_withdrawAll(), msgSender(s), owner(s), devAddress(d).
+withdrawCreator(c, 65) :- recv_withdrawAll(), msgSender(s), owner(s), creatorAddress(c).
+send(p, n) :- withdrawDev(p, n).
+send(p, n) :- withdrawCreator(p, n).

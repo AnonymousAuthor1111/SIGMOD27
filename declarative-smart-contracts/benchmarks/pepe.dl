@@ -1,0 +1,110 @@
+// Simplified PEPE
+
+// Admin and configuration state
+.decl *owner(p: address)
+.decl *limited(b: bool)
+.decl *maxHoldingAmount(n: uint)
+.decl *minHoldingAmount(n: uint)
+.decl *uniswapV2Pair(p: address)
+
+// Token state
+.decl *totalSupply(n: uint)
+.decl balanceOf(p: address, n: uint)[0]
+.decl allowance(p: address, s: address, n: uint)[0,1]
+
+// Constructor
+.decl constructor(totalSupply: uint)
+
+// ERC20 transactions
+.decl transfer(from: address, to: address, amount: uint)
+.decl recv_transfer(to: address, amount: uint)
+.decl transferFrom(from: address, to: address, spender: address, amount: uint)
+.decl recv_transferFrom(from: address, to: address, amount: uint)
+.decl burn(p: address, amount: uint)
+.decl recv_burn(amount: uint)
+.decl recv_approve(s: address, n: uint)
+.decl recv_increaseAllowance(s: address, n: uint)
+.decl recv_decreaseAllowance(s: address, n: uint)
+.decl increaseAllowance(p: address, s: address, n: uint)
+.decl decreaseAllowance(p: address, s: address, n: uint)
+
+// Owner-only PEPE controls
+.decl recv_blacklist(p: address, b: bool)
+.decl blacklistAction(p: address, b: bool)
+.decl recv_setRule(b: bool, pair: address, max: uint, min: uint)
+.decl setRuleAction(b: bool, pair: address, max: uint, min: uint)
+
+// Interfaces
+.public recv_transfer
+.public recv_transferFrom
+.public recv_burn
+.public recv_approve
+.public recv_increaseAllowance
+.public recv_decreaseAllowance
+.public recv_blacklist
+.public recv_setRule
+
+// Initial state
+owner(s) :- constructor(_), msgSender(s).
+totalSupply(n) :- constructor(n).
+limited(false) :- constructor(_).
+uniswapV2Pair(0) :- constructor(_).
+maxHoldingAmount(0) :- constructor(_).
+minHoldingAmount(0) :- constructor(_).
+
+// Owner-only blacklist transaction retained for gas evaluation; no persistent blacklist state is materialized.
+blacklistAction(p, b) :- recv_blacklist(p, b), msgSender(s), owner(s).
+
+// Owner updates PEPE trading rules
+setRuleAction(b, p, mx, mn) :- recv_setRule(b, p, mx, mn), msgSender(s), owner(s).
+limited(b) :- setRuleAction(b, _, _, _).
+uniswapV2Pair(p) :- setRuleAction(_, p, _, _).
+maxHoldingAmount(n) :- setRuleAction(_, _, n, _).
+minHoldingAmount(n) :- setRuleAction(_, _, _, n).
+
+// Aggregate balance accounting
+.decl initialMint(p: address, n: uint)
+.decl totalInitial(p: address, n: uint)[0]
+.decl totalBurn(p: address, n: uint)[0]
+.decl totalOutTransfer(p: address, n: uint)[0]
+.decl totalOutTransferFrom(p: address, n: uint)[0]
+.decl totalInTransfer(p: address, n: uint)[0]
+.decl totalInTransferFrom(p: address, n: uint)[0]
+
+initialMint(p, n) :- constructor(n), msgSender(p).
+initialMint(p, 0) :- transfer(p, _, _).
+initialMint(p, 0) :- transfer(_, p, _).
+initialMint(p, 0) :- transferFrom(p, _, _, _).
+initialMint(p, 0) :- transferFrom(_, p, _, _).
+initialMint(p, 0) :- burn(p, _).
+totalInitial(p, s) :- initialMint(p, _), s = sum n: initialMint(p, n).
+totalBurn(p, s) :- burn(p, _), s = sum n: burn(p, n).
+totalOutTransfer(p, s) :- transfer(p, _, _), s = sum n: transfer(p, _, n).
+totalOutTransferFrom(p, s) :- transferFrom(p, _, _, _), s = sum n: transferFrom(p, _, _, n).
+totalInTransfer(p, s) :- transfer(_, p, _), s = sum n: transfer(_, p, n).
+totalInTransferFrom(p, s) :- transferFrom(_, p, _, _), s = sum n: transferFrom(_, p, _, n).
+balanceOf(p, s) :- totalInitial(p, i), totalBurn(p, b), totalOutTransfer(p, o1), totalOutTransferFrom(p, o2), totalInTransfer(p, t1), totalInTransferFrom(p, t2), s := i + t1 + t2 - o1 - o2 - b.
+
+// Allowance accounting using SHIB-style deltas to avoid unsupported direct approve snapshots
+increaseAllowance(o, s, d) :- recv_approve(s, n), msgSender(o), allowance(o, s, m), n >= m, d := n - m.
+decreaseAllowance(o, s, d) :- recv_approve(s, n), msgSender(o), allowance(o, s, m), n < m, d := m - n.
+increaseAllowance(o, s, n) :- recv_increaseAllowance(s, n), msgSender(o), o != 0, s != 0.
+decreaseAllowance(o, s, n) :- recv_decreaseAllowance(s, n), msgSender(o), o != 0, s != 0, allowance(o, s, m), m >= n.
+
+.decl increaseAllowanceTotal(o: address, s: address, n: uint)[0,1]
+.decl decreaseAllowanceTotal(o: address, s: address, n: uint)[0,1]
+.decl spentTotal(o: address, s: address, n: uint)[0,1]
+
+increaseAllowanceTotal(o, s, m) :- increaseAllowance(o, s, _), m = sum n: increaseAllowance(o, s, n).
+decreaseAllowanceTotal(o, s, m) :- decreaseAllowance(o, s, _), m = sum n: decreaseAllowance(o, s, n).
+spentTotal(o, s, m) :- transferFrom(o, _, s, _), m = sum n: transferFrom(o, _, s, n).
+allowance(o, s, n) :- increaseAllowanceTotal(o, s, i), decreaseAllowanceTotal(o, s, d), spentTotal(o, s, x), n := i - d - x.
+
+// Minimal ERC20 transfer semantics. PEPE-specific trading configuration is retained only for setRule gas evaluation.
+transfer(s, r, n) :- recv_transfer(r, n), msgSender(s), balanceOf(s, m), n <= m, s != 0, r != 0.
+
+transferFrom(o, r, s, n) :- recv_transferFrom(o, r, n), msgSender(s), balanceOf(o, m), allowance(o, s, k), n <= m, n <= k,
+                            o != 0, r != 0.
+
+// Burn
+burn(p, n) :- recv_burn(n), msgSender(p), p != 0, balanceOf(p, m), n <= m.

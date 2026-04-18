@@ -1,0 +1,115 @@
+// Simplified Uniswap V2 Pair benchmark.
+
+.decl *factory(p: address)
+.decl *initialized(b: bool)
+.decl *token0(p: address)
+.decl *token1(p: address)
+.decl *reserve0(n: uint)
+.decl *reserve1(n: uint)
+.decl *totalSupply(n: uint)
+.decl lpBalanceOf(p: address, n: uint)[0]
+
+.decl constructor()
+
+.decl recv_initialize(token0: address, token1: address)
+.decl recv_mint(to: address, amount0: uint, amount1: uint)
+.decl recv_burn(to: address, liquidity: uint)
+.decl recv_swap(amount0In: uint, amount1In: uint, amount0Out: uint, amount1Out: uint, to: address)
+.decl recv_sync(balance0: uint, balance1: uint)
+
+.decl initialize(token0: address, token1: address)
+.decl mint(to: address, amount0: uint, amount1: uint, liquidity: uint)
+.decl burn(from: address, to: address, liquidity: uint, amount0: uint, amount1: uint)
+.decl swap(sender: address, to: address, amount0In: uint, amount1In: uint, amount0Out: uint, amount1Out: uint)
+.decl syncAction(balance0: uint, balance1: uint)
+
+.decl lpMint(to: address, n: uint)
+.decl lpBurn(from: address, n: uint)
+.decl reserve0Add(n: uint)
+.decl reserve0Sub(n: uint)
+.decl reserve1Add(n: uint)
+.decl reserve1Sub(n: uint)
+
+.decl *allLpMint(n: uint)
+.decl *allLpBurn(n: uint)
+.decl totalLpMint(p: address, n: uint)[0]
+.decl totalLpBurn(p: address, n: uint)[0]
+.decl *allReserve0Add(n: uint)
+.decl *allReserve0Sub(n: uint)
+.decl *allReserve1Add(n: uint)
+.decl *allReserve1Sub(n: uint)
+
+.public recv_initialize
+.public recv_mint
+.public recv_burn
+.public recv_swap
+.public recv_sync
+.public initialized(0)
+.public token0(0)
+.public token1(0)
+.public reserve0(0)
+.public reserve1(0)
+.public totalSupply(0)
+.public lpBalanceOf(1)
+
+factory(s) :- constructor(), msgSender(s).
+initialized(false) :- constructor().
+token0(0) :- constructor().
+token1(0) :- constructor().
+allLpMint(0) :- constructor().
+allLpBurn(0) :- constructor().
+allReserve0Add(0) :- constructor().
+allReserve0Sub(0) :- constructor().
+allReserve1Add(0) :- constructor().
+allReserve1Sub(0) :- constructor().
+
+initialize(t0, t1) :- recv_initialize(t0, t1), msgSender(s), factory(s), initialized(false), t0 != 0, t1 != 0, t0 != t1.
+initialized(true) :- initialize(_, _).
+token0(t0) :- initialize(t0, _).
+token1(t1) :- initialize(_, t1).
+
+mint(to, amount0, amount1, liquidity) :- recv_mint(to, amount0, amount1), initialized(true), to != 0, amount0 > 0, amount1 > 0, liquidity := min(amount0, amount1).
+lpMint(to, n) :- mint(to, _, _, n).
+reserve0Add(n) :- mint(_, n, _, _).
+reserve1Add(n) :- mint(_, _, n, _).
+
+burn(from, to, liquidity, amount0, amount1) :- recv_burn(to, liquidity), msgSender(from), initialized(true), to != 0,
+                                               lpBalanceOf(from, m), m >= liquidity,
+                                               amount0 := liquidity, amount1 := liquidity.
+lpBurn(from, n) :- burn(from, _, n, _, _).
+reserve0Sub(n) :- burn(_, _, _, n, _).
+reserve1Sub(n) :- burn(_, _, _, _, n).
+
+swap(s, to, amount0In, amount1In, amount0Out, amount1Out) :-
+  recv_swap(amount0In, amount1In, amount0Out, amount1Out, to), msgSender(s), initialized(true), to != 0,
+  amount0Out > 0, amount0In > 0.
+swap(s, to, amount0In, amount1In, amount0Out, amount1Out) :-
+  recv_swap(amount0In, amount1In, amount0Out, amount1Out, to), msgSender(s), initialized(true), to != 0,
+  amount0Out > 0, amount1In > 0.
+swap(s, to, amount0In, amount1In, amount0Out, amount1Out) :-
+  recv_swap(amount0In, amount1In, amount0Out, amount1Out, to), msgSender(s), initialized(true), to != 0,
+  amount1Out > 0, amount0In > 0.
+swap(s, to, amount0In, amount1In, amount0Out, amount1Out) :-
+  recv_swap(amount0In, amount1In, amount0Out, amount1Out, to), msgSender(s), initialized(true), to != 0,
+  amount1Out > 0, amount1In > 0.
+reserve0Add(n) :- swap(_, _, n, _, _, _).
+reserve1Add(n) :- swap(_, _, _, n, _, _).
+reserve0Sub(n) :- swap(_, _, _, _, n, _).
+reserve1Sub(n) :- swap(_, _, _, _, _, n).
+
+syncAction(b0, b1) :- recv_sync(b0, b1), initialized(true).
+
+totalLpMint(p, s) :- lpMint(p, _), s = sum n: lpMint(p, n).
+totalLpBurn(p, s) :- lpBurn(p, _), s = sum n: lpBurn(p, n).
+lpBalanceOf(p, n) :- totalLpMint(p, m), totalLpBurn(p, b), n := m - b.
+
+allLpMint(s) :- s = sum n: lpMint(_, n).
+allLpBurn(s) :- s = sum n: lpBurn(_, n).
+totalSupply(n) :- allLpMint(m), allLpBurn(b), n := m - b.
+
+allReserve0Add(s) :- s = sum n: reserve0Add(n).
+allReserve0Sub(s) :- s = sum n: reserve0Sub(n).
+allReserve1Add(s) :- s = sum n: reserve1Add(n).
+allReserve1Sub(s) :- s = sum n: reserve1Sub(n).
+reserve0(n) :- allReserve0Add(a), allReserve0Sub(b), n := a - b.
+reserve1(n) :- allReserve1Add(a), allReserve1Sub(b), n := a - b.

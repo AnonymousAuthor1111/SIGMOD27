@@ -1,0 +1,62 @@
+// Simplified DAI
+
+.decl wards(p: address, b: bool)[0]
+.decl allowance(owner: address, spender: address, n: uint)[0,1]
+
+.decl constructor(chainId: uint)
+
+.decl recv_rely(guy: address)
+.decl recv_deny(guy: address)
+.decl recv_mint(usr: address, wad: uint)
+.decl recv_burn(usr: address, wad: uint)
+.decl recv_transfer(dst: address, wad: uint)
+.decl recv_transferFrom(src: address, dst: address, wad: uint)
+.decl recv_approve(spender: address, wad: uint)
+.decl recv_push(usr: address, wad: uint)
+.decl recv_pull(usr: address, wad: uint)
+.decl recv_move(src: address, dst: address, wad: uint)
+
+.decl rely(guy: address)
+.decl deny(guy: address)
+.decl mint(usr: address, wad: uint)
+.decl burnSelf(usr: address, wad: uint)
+.decl burnFrom(usr: address, spender: address, wad: uint)
+.decl approve(owner: address, spender: address, wad: uint)
+.decl transfer(src: address, dst: address, wad: uint)
+.decl transferFrom(src: address, dst: address, spender: address, wad: uint)
+.decl pushAction(src: address, dst: address, wad: uint)
+.decl pullAction(src: address, dst: address, spender: address, wad: uint)
+.decl moveAction(src: address, dst: address, spender: address, wad: uint)
+
+.public recv_rely
+.public recv_deny
+.public recv_mint
+.public recv_burn
+.public recv_transfer
+.public recv_transferFrom
+.public recv_approve
+.public recv_push
+.public recv_pull
+.public recv_move
+
+wards(s, true) :- constructor(_), msgSender(s).
+
+rely(g) :- recv_rely(g), msgSender(s), wards(s, true), g != 0.
+deny(g) :- recv_deny(g), msgSender(s), wards(s, true), g != 0.
+wards(g, true) :- rely(g).
+wards(g, false) :- deny(g).
+
+mint(p, n) :- recv_mint(p, n), msgSender(s), wards(s, true), p != 0.
+
+approve(o, s, n) :- recv_approve(s, n), msgSender(o), o != 0, s != 0.
+allowance(o, s, n) :- approve(o, s, n).
+
+transfer(s, r, n) :- recv_transfer(r, n), msgSender(s), s != 0, r != 0.
+pushAction(s, r, n) :- recv_push(r, n), msgSender(s), s != 0, r != 0.
+
+transferFrom(o, r, s, n) :- recv_transferFrom(o, r, n), msgSender(s), o != 0, r != 0, allowance(o, s, k), k >= n.
+pullAction(o, s, s, n) :- recv_pull(o, n), msgSender(s), o != 0, allowance(o, s, k), k >= n.
+moveAction(o, r, s, n) :- recv_move(o, r, n), msgSender(s), o != 0, r != 0, allowance(o, s, k), k >= n.
+
+burnSelf(u, n) :- recv_burn(u, n), msgSender(s), u == s, u != 0.
+burnFrom(u, s, n) :- recv_burn(u, n), msgSender(s), u != s, u != 0, allowance(u, s, k), k >= n.

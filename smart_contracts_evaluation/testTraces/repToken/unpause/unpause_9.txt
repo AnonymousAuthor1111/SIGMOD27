@@ -1,0 +1,3 @@
+unpause,constructor,,accounts[0] 1000 accounts[3] 1500,1,,false
+unpause,migrateBalance,instance,accounts[5] 500,1,,false
+unpause,unpause,instance,,1,,true

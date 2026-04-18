@@ -1,0 +1,3 @@
+setAuctionSaleStartTime,constructor,,5 10000 5000 200,0,,false
+setAuctionSaleStartTime,setAuctionSaleStartTime,instance,1,0,,false
+setAuctionSaleStartTime,setAuctionSaleStartTime,instance,100,0,,true

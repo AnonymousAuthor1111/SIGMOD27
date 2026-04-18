@@ -1,0 +1,4 @@
+approve,constructor,,5 10000 5000 200,0,,false
+approve,mintToken,instance,accounts[7] 592,0,,false
+approve,approve,instance,accounts[3] 592,7,,false
+approve,approve,instance,accounts[6] 592,7,,true

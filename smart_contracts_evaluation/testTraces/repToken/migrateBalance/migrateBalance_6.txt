@@ -1,0 +1,3 @@
+migrateBalance,constructor,,accounts[5] 1000 accounts[0] 15000,7,,false
+migrateBalance,migrateBalance,instance,accounts[9] 208,7,,false
+migrateBalance,migrateBalance,instance,accounts[3] 463,7,,true

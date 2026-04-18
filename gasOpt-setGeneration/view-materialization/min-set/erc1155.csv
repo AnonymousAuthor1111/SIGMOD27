@@ -1,0 +1,4 @@
+issueTotalById,balanceOf,totalBalancesById,burnTotalById,isApprovedForAll,owner,,totalSupplyById
+balanceOf,totalSupplyById,totalBalancesById,isApprovedForAll,owner,
+totalMint,issueTotalById,totalIn,totalBurn,totalBalancesById,totalOut,burnTotalById,isApprovedForAll,totalInitial,owner,,balanceOf,totalSupplyById
+totalMint,totalIn,totalBurn,totalSupplyById,totalBalancesById,totalOut,isApprovedForAll,totalInitial,owner,,balanceOf

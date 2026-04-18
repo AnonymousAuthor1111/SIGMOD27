@@ -1,0 +1,4 @@
+balanceOf,owner,allBurn,allMint,,totalSupply
+totalSupply,balanceOf,owner,
+totalSupply,totalIn,totalOut,owner,,balanceOf
+totalOut,owner,totalIn,allBurn,allMint,,totalSupply,balanceOf

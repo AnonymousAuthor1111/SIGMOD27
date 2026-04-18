@@ -1,0 +1,12 @@
+#body,head,ruleId,isAgg,isTx
+upgradeTo,implementation,0,false,false
+admin,zeroAdmin,1,false,false
+upgradeToAndCall,implementation,2,false,false
+implementation,zeroImpl,3,false,false
+changeAdmin,admin,4,false,false
+msgSender,upgradeToAndCall,7,false,true
+admin,upgradeToAndCall,7,false,true
+admin,upgradeTo,8,false,true
+msgSender,upgradeTo,8,false,true
+msgSender,changeAdmin,9,false,true
+admin,changeAdmin,9,false,true

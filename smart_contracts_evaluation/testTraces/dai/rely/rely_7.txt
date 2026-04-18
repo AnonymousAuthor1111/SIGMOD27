@@ -1,0 +1,3 @@
+rely,constructor,,1,0,,false
+rely,rely,instance,accounts[7],0,,false
+rely,rely,instance,accounts[3],0,,true

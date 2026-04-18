@@ -1,0 +1,9 @@
+vote,constructor,,3,0,,false
+vote,giveRightToVote,instance,accounts[1],0,,false
+vote,giveRightToVote,instance,accounts[7],0,,false
+vote,giveRightToVote,instance,accounts[9],0,,false
+vote,giveRightToVote,instance,accounts[5],0,,false
+vote,vote,instance,1,1,,true
+vote,vote,instance,1,7,,true
+vote,vote,instance,1,9,,true
+vote,vote,instance,1,5,,true

@@ -1,0 +1,4 @@
+transfer,constructor,,932,,,false
+transfer,transfer,instance,accounts[8] 589,,,false
+transfer,transfer,instance,accounts[0] 93,8,,false
+transfer,transfer,instance,accounts[0] 197,8,,true

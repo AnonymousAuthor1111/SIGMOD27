@@ -1,0 +1,4 @@
+operatorBurn,constructor,,1 2,,,false
+operatorBurn,mint,instance,507 5114470618521451,1,,false
+operatorBurn,authorizeOperator,instance,accounts[4],1,,false
+operatorBurn,operatorBurn,instance,accounts[1] 167 5114470618521451 2538730521036361,4,,true

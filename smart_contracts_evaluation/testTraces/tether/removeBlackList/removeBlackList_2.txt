@@ -1,0 +1,5 @@
+removeBlackList,constructor,,337,8,,false
+removeBlackList,addBlackList,instance,accounts[4],8,,false
+removeBlackList,removeBlackList,instance,accounts[4],8,,false
+emoveBlackList,addBlackList,instance,accounts[2],8,,false
+removeBlackList,removeBlackList,instance,accounts[2],8,,true

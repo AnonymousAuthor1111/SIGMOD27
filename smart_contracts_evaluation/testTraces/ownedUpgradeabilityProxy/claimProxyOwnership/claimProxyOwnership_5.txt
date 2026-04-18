@@ -1,0 +1,5 @@
+claimProxyOwnership,constructor,,,5,,false
+claimProxyOwnership,transferProxyOwnership,instance,accounts[9],5,,false
+claimProxyOwnership,claimProxyOwnership,instance,,9,,false
+claimProxyOwnership,transferProxyOwnership,instance,accounts[8],9,,false
+claimProxyOwnership,claimProxyOwnership,instance,,8,,true

@@ -1,0 +1,4 @@
+withdraw,constructor,,,0,,false
+withdraw,deposit,instance,,6,10000,,false
+withdraw,withdraw,instance,999,6,,false
+withdraw,withdraw,instance,1459,6,,true

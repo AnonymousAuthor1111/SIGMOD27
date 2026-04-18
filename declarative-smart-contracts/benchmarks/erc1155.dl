@@ -1,0 +1,90 @@
+// Simplified ERC-1155-style benchmark model.
+
+// Admin state
+.decl *owner(p: address)
+
+// Public token state
+.decl balanceOf(p: address, id: uint, n: uint)[0,1]
+.decl totalSupplyById(id: uint, n: uint)[0]
+.decl isApprovedForAll(owner: address, operator: address, approved: bool)[0,1]
+
+.decl constructor()
+
+// External calls
+.decl recv_setApprovalForAll(operator: address, approved: bool)
+.decl recv_safeTransferFrom(from: address, to: address, id: uint, value: uint)
+.decl recv_mint(to: address, id: uint, value: uint)
+.decl recv_burn(from: address, id: uint, value: uint)
+
+// Internal actions
+.decl setApprovalForAllAction(owner: address, operator: address, approved: bool)
+.decl transferSingle(from: address, to: address, operator: address, id: uint, value: uint)
+.decl mint(to: address, id: uint, value: uint)
+.decl burn(from: address, operator: address, id: uint, value: uint)
+
+.public recv_setApprovalForAll
+.public recv_safeTransferFrom
+.public recv_mint
+.public recv_burn
+.public balanceOf(2)
+.public totalSupplyById(1)
+.public isApprovedForAll(2)
+
+owner(s) :- constructor(), msgSender(s).
+
+// Operator approvals. Absence means effectively false; the latest keyed value
+// for (owner, operator) is the current state when present.
+setApprovalForAllAction(o, s, b) :- recv_setApprovalForAll(s, b), msgSender(o), o != 0, s != 0, o != s.
+isApprovedForAll(o, s, b) :- setApprovalForAllAction(o, s, b).
+
+// Authorization for single-id transfers: either the holder calls directly or a
+// previously approved operator calls on the holder's behalf.
+transferSingle(f, t, f, id, n) :- recv_safeTransferFrom(f, t, id, n), msgSender(f), f != 0, t != 0, n > 0,
+                                  balanceOf(f, id, m), m >= n.
+transferSingle(f, t, s, id, n) :- recv_safeTransferFrom(f, t, id, n), msgSender(s), f != 0, t != 0, s != 0, n > 0,
+                                  isApprovedForAll(f, s, true), balanceOf(f, id, m), m >= n.
+
+// Owner-controlled mint and burn. Burn supports self-burn or approved operator burn.
+mint(t, id, n) :- recv_mint(t, id, n), msgSender(s), owner(s), t != 0, n > 0.
+burn(f, f, id, n) :- recv_burn(f, id, n), msgSender(f), f != 0, n > 0, balanceOf(f, id, m), m >= n.
+burn(f, s, id, n) :- recv_burn(f, id, n), msgSender(s), f != 0, s != 0, n > 0,
+                     isApprovedForAll(f, s, true), balanceOf(f, id, m), m >= n.
+
+// Aggregate per-(owner,id) balance accounting.
+.decl initialBalance(p: address, id: uint, n: uint)
+.decl totalInitial(p: address, id: uint, n: uint)[0,1]
+.decl totalIn(p: address, id: uint, n: uint)[0,1]
+.decl totalOut(p: address, id: uint, n: uint)[0,1]
+.decl totalMint(p: address, id: uint, n: uint)[0,1]
+.decl totalBurn(p: address, id: uint, n: uint)[0,1]
+
+// Seed zero rows for touched (owner,id) pairs so getters materialize cleanly.
+initialBalance(p, id, 0) :- mint(p, id, _).
+initialBalance(p, id, 0) :- burn(p, _, id, _).
+initialBalance(p, id, 0) :- transferSingle(p, _, _, id, _).
+initialBalance(p, id, 0) :- transferSingle(_, p, _, id, _).
+
+totalInitial(p, id, s) :- initialBalance(p, id, _), s = sum n: initialBalance(p, id, n).
+totalIn(p, id, s) :- transferSingle(_, p, _, id, _), s = sum n: transferSingle(_, p, _, id, n).
+totalOut(p, id, s) :- transferSingle(p, _, _, id, _), s = sum n: transferSingle(p, _, _, id, n).
+totalMint(p, id, s) :- mint(p, id, _), s = sum n: mint(p, id, n).
+totalBurn(p, id, s) :- burn(p, _, id, _), s = sum n: burn(p, _, id, n).
+
+balanceOf(p, id, s) :- totalInitial(p, id, i), totalMint(p, id, m), totalBurn(p, id, b), totalIn(p, id, ti), totalOut(p, id, to),
+                       s := i + m + ti - b - to.
+
+// Per-id total supply.
+.decl issueTotalById(id: uint, n: uint)[0]
+.decl burnTotalById(id: uint, n: uint)[0]
+
+issueTotalById(id, s) :- mint(_, id, _), s = sum n: mint(_, id, n).
+burnTotalById(id, s) :- burn(_, _, id, _), s = sum n: burn(_, _, id, n).
+totalSupplyById(id, n) :- issueTotalById(id, i), burnTotalById(id, b), n := i - b.
+
+// Accounting invariant: sum of balances for an id should equal supply for that id.
+.decl totalBalancesById(id: uint, n: uint)[0]
+.decl unequalBalanceById(id: uint, balances: uint, supply: uint)[0]
+.violation unequalBalanceById
+
+totalBalancesById(id, s) :- s = sum n: balanceOf(_, id, n).
+unequalBalanceById(id, s, n) :- totalBalancesById(id, s), totalSupplyById(id, n), s != n.

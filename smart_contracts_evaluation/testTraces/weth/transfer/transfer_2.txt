@@ -1,0 +1,4 @@
+transfer,constructor,,,0,,false
+transfer,deposit,instance,,0,10000,,false
+transfer,transfer,instance,accounts[2] 769,0,,false
+transfer,transfer,instance,accounts[2] 441,0,,true

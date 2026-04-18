@@ -1,0 +1,114 @@
+// CrowFunding + Escrow (flattened)
+// Adopted from: https://github.com/eth-sri/verx-benchmarks/blob/master/overview/main.sol
+
+// ========== State Declarations ==========
+.decl *target(t: uint)
+.decl *beneficiary(p: address)
+.decl *owner(p: address)
+.decl *raised(n: uint)
+.decl *closeTime(t: uint)
+.decl *closed(b: bool)
+
+// ========== Constructor ==========
+// Reference: CrowFunding(uint256 _goal, address _escrow)
+// closeTime = block.timestamp + 30 days (passed as parameter since Datalog
+// cannot compute now() + duration at construction time)
+.decl constructor(t: uint, b: address, ct: uint)
+
+// ========== Transactions ==========
+.decl recv_close()
+.decl close()
+
+.decl recv_invest()
+.decl invest(p: address, n: uint)
+
+// claimRefund takes an address parameter (anyone can trigger refund for any address)
+.decl recv_refund(p: address)
+.decl refund(p: address, n: uint)
+
+// withdraw is public (anyone can trigger payment to beneficiary)
+.decl recv_withdraw()
+.decl withdraw(p: address, n: uint)
+
+// ========== Interfaces ==========
+.public recv_close
+.public recv_invest
+.public recv_refund
+.public recv_withdraw
+.public closed(0)
+.public raised(0)
+
+// ========== Balance Tracking ==========
+.decl investTotal(p: address, n: uint)[0]
+.decl refundTotal(p: address, n: uint)[0]
+.decl balanceOf(p: address, n: uint)[0]
+
+// ==================== Rules ====================
+
+// ========== Constructor Rules ==========
+beneficiary(p) :- constructor(_, p, _).
+target(t) :- constructor(t, _, _).
+owner(p) :- constructor(_, _, _), msgSender(p).
+raised(0) :- constructor(_, _, _).
+closed(false) :- constructor(_, _, _).
+closeTime(ct) :- constructor(_, _, ct).
+
+// ========== invest ==========
+// Reference: require(block.timestamp <= closeTime); require(raised < goal);
+// Anyone can call, payable
+invest(p, n) :- recv_invest(), msgSender(p), msgValue(n), n > 0,
+    closed(false), now(t), closeTime(ct), t <= ct,
+    raised(s), target(g), s < g.
+
+// Raised tracking via aggregation
+raised(s) :- s = sum m: invest(_, m).
+
+// Per-address deposit tracking
+investTotal(p, s) :- invest(p, _), s = sum m: invest(p, m).
+refundTotal(p, s) :- refund(p, _), s = sum m: refund(p, m).
+balanceOf(p, s) :- investTotal(p, i), refundTotal(p, r), s := i - r.
+
+// ========== close ==========
+// Reference: public (no access control)
+// require(block.timestamp > closeTime || raised >= goal)
+// Sets closed = true; success vs refund determined by raised vs target
+close() :- recv_close(), closed(false),
+    now(t), closeTime(ct), t > ct.
+close() :- recv_close(), closed(false),
+    raised(r), target(g), r >= g.
+closed(true) :- close().
+
+// ========== claimRefund ==========
+// Reference: claimRefund(address payable p) - anyone can call for any address
+// require(state == REFUND) => closed && raised < goal
+// amount = deposits[p], deposits[p] = 0, p.transfer(amount)
+refund(p, n) :- recv_refund(p), closed(true),
+    raised(r), target(g), r < g,
+    balanceOf(p, n), n > 0.
+send(p, n) :- refund(p, n).
+
+// ========== withdraw ==========
+// Reference: public (anyone can trigger), require(state == SUCCESS)
+// beneficiary.transfer(address(this).balance)
+//
+// Use thisBalance(n) instead of raised(r) so the full contract balance is
+// swept — including any ETH sent outside the invest flow — matching the
+// reference exactly.
+//
+// The n > 0 guard makes withdraw naturally idempotent: the first successful
+// call drains address(this).balance to 0, so a subsequent recv_withdraw
+// evaluates thisBalance = 0, fails the `n > 0` filter, and produces no
+// send / emit — mirroring the ref's "transfer(0)" no-op.
+withdraw(b, n) :- recv_withdraw(), closed(true),
+    raised(r), target(g), r >= g,
+    beneficiary(b),
+    thisBalance(n), n > 0.
+send(p, n) :- withdraw(p, n).
+
+// ========== Properties ==========
+.decl *missingFund(m: uint, r: uint)
+.violation missingFund
+.decl *totalBalance(m: uint)
+totalBalance(0) :- constructor(_, _, _).
+totalBalance(m) :- m = sum n: balanceOf(_, n).
+missingFund(m, r) :- totalBalance(m), raised(r), m != r, closed(false).

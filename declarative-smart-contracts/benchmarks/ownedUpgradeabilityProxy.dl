@@ -1,0 +1,60 @@
+// OwnedUpgradeabilityProxy - TrustToken (TrueUSD) Proxy Contract
+// Adopted from: https://etherscan.io/address/0x0000000000085d4780B73119b644AE5ecd22b376
+
+// State
+.decl *proxyOwner(p: address)
+.decl *pendingProxyOwner(p: address)
+.decl *implementation(p: address)
+
+// Constructor
+.decl constructor()
+
+// Transactions
+.decl recv_transferProxyOwnership(newOwner: address)
+.decl transferProxyOwnership(newOwner: address)
+
+.decl recv_claimProxyOwnership()
+.decl claimProxyOwnership(newOwner: address)
+
+.decl recv_upgradeTo(newImpl: address)
+.decl upgradeTo(oldImpl: address, newImpl: address)
+
+// Interfaces
+.public recv_transferProxyOwnership
+.public recv_claimProxyOwnership
+.public recv_upgradeTo
+.public proxyOwner(0)
+.public pendingProxyOwner(0)
+.public implementation(0)
+
+// ---- Constructor ----
+// owner = msg.sender, no implementation set initially
+proxyOwner(s) :- constructor(), msgSender(s).
+pendingProxyOwner(0) :- constructor().
+
+// ---- transferProxyOwnership ----
+// onlyProxyOwner, newOwner != 0
+// Sets pending owner, does NOT transfer yet
+transferProxyOwnership(a) :- recv_transferProxyOwnership(a), msgSender(s),
+    proxyOwner(s), a != 0.
+pendingProxyOwner(a) :- transferProxyOwnership(a).
+
+// ---- claimProxyOwnership ----
+// onlyPendingProxyOwner
+// Transfers ownership from current owner to pending, clears pending
+claimProxyOwnership(p) :- recv_claimProxyOwnership(), msgSender(s),
+    pendingProxyOwner(s), s != 0, pendingProxyOwner(p).
+proxyOwner(a) :- claimProxyOwnership(a).
+pendingProxyOwner(0) :- claimProxyOwnership(_).
+
+// ---- upgradeTo ----
+// onlyProxyOwner, newImplementation != currentImplementation
+upgradeTo(old, i) :- recv_upgradeTo(i), msgSender(s), proxyOwner(s),
+    implementation(old), old != i.
+implementation(i) :- upgradeTo(_, i).
+
+// ---- Properties ----
+// Owner should never be zero address
+.decl *zeroOwner()
+.violation zeroOwner
+zeroOwner() :- proxyOwner(a), a == 0.

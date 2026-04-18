@@ -1,0 +1,8 @@
+delegate,constructor,,3,0,,false
+delegate,giveRightToVote,instance,accounts[3],0,,false
+delegate,giveRightToVote,instance,accounts[5],0,,false
+delegate,giveRightToVote,instance,accounts[2],0,,false
+delegate,giveRightToVote,instance,accounts[4],0,,false
+delegate,giveRightToVote,instance,accounts[7],0,,false
+delegate,giveRightToVote,instance,accounts[1],0,,false
+delegate,delegate,instance,accounts[5],3,,true

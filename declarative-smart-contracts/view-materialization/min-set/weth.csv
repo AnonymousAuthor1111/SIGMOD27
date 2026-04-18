@@ -1,0 +1,8 @@
+allMint,maxUint,totalBalances,msgValue,allowanceTotal,decreaseTotal,totalBurn,allBurn,totalIn,totalMint,spentTotal,totalOut,,allowance,totalSupply,balanceOf
+balanceOf,maxUint,totalBalances,msgValue,allowance,totalSupply,
+maxUint,totalBalances,msgValue,allowanceTotal,decreaseTotal,totalBurn,totalMint,totalIn,totalSupply,spentTotal,totalOut,,allowance,balanceOf
+maxUint,totalBalances,msgValue,totalBurn,totalMint,totalIn,allowance,totalSupply,totalOut,,balanceOf
+allMint,maxUint,totalBalances,msgValue,totalBurn,totalMint,allBurn,totalIn,allowance,totalOut,,totalSupply,balanceOf
+allMint,balanceOf,maxUint,totalBalances,msgValue,allowanceTotal,decreaseTotal,allBurn,spentTotal,,allowance,totalSupply
+allMint,balanceOf,maxUint,totalBalances,msgValue,allBurn,allowance,,totalSupply
+balanceOf,maxUint,totalBalances,msgValue,allowanceTotal,decreaseTotal,totalSupply,spentTotal,,allowance

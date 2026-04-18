@@ -1,0 +1,2 @@
+blacklist,constructor,,987,0,,false
+blacklist,blacklist,instance,accounts[1] 1,0,,true

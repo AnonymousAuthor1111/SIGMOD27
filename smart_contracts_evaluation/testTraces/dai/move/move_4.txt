@@ -1,0 +1,5 @@
+move,constructor,,1,0,,false
+move,mint,instance,accounts[2] 675,0,,false
+move,approve,instance,accounts[5] 65,2,,false
+move,move,instance,accounts[2] accounts[1] 3,5,,false
+move,move,instance,accounts[2] accounts[1] 3,5,,true

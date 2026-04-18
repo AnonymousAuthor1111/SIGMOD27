@@ -1,0 +1,4 @@
+burn,constructor,,1 2,7,,false
+burn,mint,instance,504 2201565325148806,8,,false
+burn,burn,instance,236 3737529307067554,8,,false
+burn,burn,instance,83 3737529307067554,8,,true

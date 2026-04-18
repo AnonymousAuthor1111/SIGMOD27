@@ -1,0 +1,3 @@
+transferFrom,constructor,,,0,,false
+transferFrom,transferFrom,instance,accounts[0] accounts[1] 0,5,,false
+transferFrom,transferFrom,instance,accounts[0] accounts[1] 0,5,,true

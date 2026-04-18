@@ -1,0 +1,5 @@
+punkNoLongerForSale,constructor,,,0,,false
+punkNoLongerForSale,allInitialOwnersAssigned,instance,,0,,false
+punkNoLongerForSale,getPunk,instance,11,1,,false
+punkNoLongerForSale,offerPunkForSale,instance,11 100,1,,false
+punkNoLongerForSale,punkNoLongerForSale,instance,11,1,,true

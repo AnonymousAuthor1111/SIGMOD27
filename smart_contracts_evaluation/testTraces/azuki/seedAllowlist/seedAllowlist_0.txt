@@ -1,0 +1,3 @@
+seedAllowlist,constructor,,5 10000 5000 200,0,,false
+seedAllowlist,seedAllowlist,instance,accounts[1] 1,0,,false
+seedAllowlist,seedAllowlist,instance,accounts[2] 2,0,,true

@@ -1,0 +1,4 @@
+push,constructor,,1,0,,false
+push,mint,instance,accounts[1] 319,0,,false
+push,push,instance,accounts[5] 30,1,,false
+push,push,instance,accounts[5] 56,1,,true

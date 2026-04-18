@@ -1,0 +1,2 @@
+initialize,constructor,,,0,,false
+initialize,initialize,instance,accounts[6] accounts[4],0,,true

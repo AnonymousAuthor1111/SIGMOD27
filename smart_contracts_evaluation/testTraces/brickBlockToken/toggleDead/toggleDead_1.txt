@@ -1,0 +1,2 @@
+toggleDead,constructor,,accounts[2],1,,false
+toggleDead,toggleDead,instance,,1,,true

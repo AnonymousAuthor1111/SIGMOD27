@@ -1,0 +1,3 @@
+transferFrom,constructor,,,7,,false
+transferFrom,transferFrom,instance,accounts[7] accounts[9] 0,4,,false
+transferFrom,transferFrom,instance,accounts[7] accounts[9] 0,4,,true

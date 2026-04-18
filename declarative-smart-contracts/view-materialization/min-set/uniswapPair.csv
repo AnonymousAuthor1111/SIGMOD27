@@ -1,0 +1,16 @@
+allReserve0Add,factory,token1,totalLpMint,initialized,reserve1,token0,allReserve0Sub,allLpBurn,totalLpBurn,allLpMint,,lpBalanceOf,totalSupply,reserve0
+factory,token1,reserve0,totalLpMint,initialized,reserve1,token0,totalLpBurn,totalSupply,,lpBalanceOf
+factory,token1,reserve0,lpBalanceOf,initialized,allReserve1Sub,token0,allReserve1Add,totalSupply,,reserve1
+factory,token1,reserve0,lpBalanceOf,initialized,reserve1,token0,allLpBurn,allLpMint,,totalSupply
+allReserve0Add,factory,token1,totalLpMint,initialized,allReserve1Sub,token0,allReserve1Add,allReserve0Sub,totalSupply,totalLpBurn,,lpBalanceOf,reserve1,reserve0
+allReserve0Add,factory,token1,totalLpMint,initialized,allReserve1Sub,token0,allReserve1Add,allReserve0Sub,allLpBurn,totalLpBurn,allLpMint,,lpBalanceOf,totalSupply,reserve1,reserve0
+factory,token1,reserve0,lpBalanceOf,initialized,reserve1,token0,totalSupply,
+allReserve0Add,factory,token1,totalLpMint,initialized,reserve1,token0,allReserve0Sub,totalLpBurn,totalSupply,,lpBalanceOf,reserve0
+factory,token1,reserve0,totalLpMint,initialized,allReserve1Sub,token0,allReserve1Add,totalLpBurn,totalSupply,,lpBalanceOf,reserve1
+allReserve0Add,factory,token1,lpBalanceOf,initialized,reserve1,token0,allReserve0Sub,totalSupply,,reserve0
+factory,token1,reserve0,lpBalanceOf,initialized,allReserve1Sub,token0,allReserve1Add,allLpBurn,allLpMint,,reserve1,totalSupply
+factory,reserve0,token1,totalLpMint,initialized,allReserve1Sub,token0,allReserve1Add,allLpBurn,totalLpBurn,allLpMint,,lpBalanceOf,reserve1,totalSupply
+allReserve0Add,factory,token1,lpBalanceOf,initialized,reserve1,token0,allReserve0Sub,allLpBurn,allLpMint,,totalSupply,reserve0
+allReserve0Add,factory,token1,lpBalanceOf,initialized,allReserve1Sub,token0,allReserve1Add,allReserve0Sub,totalSupply,,reserve1,reserve0
+allReserve0Add,factory,token1,lpBalanceOf,initialized,allReserve1Sub,token0,allReserve1Add,allReserve0Sub,allLpBurn,allLpMint,,totalSupply,reserve1,reserve0
+factory,token1,reserve0,totalLpMint,initialized,reserve1,token0,allLpBurn,totalLpBurn,allLpMint,,lpBalanceOf,totalSupply

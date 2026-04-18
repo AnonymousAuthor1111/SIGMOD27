@@ -1,0 +1,97 @@
+// Simplified ERC-721-style benchmark model derived from the OpenZeppelin ERC721
+
+.decl *owner(p: address)
+
+.decl ownerOf(tokenId: uint, o: address)[0]
+.decl getApproved(tokenId: uint, approved: address)[0]
+.decl isApprovedForAll(o: address, operator: address, approved: bool)[0,1]
+.decl balanceOf(p: address, n: uint)[0]
+
+.decl constructor()
+
+.decl recv_mint(to: address, tokenId: uint)
+.decl recv_burn(tokenId: uint)
+.decl recv_transferFrom(from: address, to: address, tokenId: uint)
+.decl recv_approve(approved: address, tokenId: uint)
+.decl recv_setApprovalForAll(operator: address, approved: bool)
+
+.decl mint(to: address, tokenId: uint)
+.decl burn(from: address, operator: address, tokenId: uint)
+.decl transferFrom(from: address, to: address, operator: address, tokenId: uint)
+.decl approveAction(o: address, approved: address, tokenId: uint)
+.decl setApprovalForAllAction(o: address, operator: address, approved: bool)
+
+.public recv_mint
+.public recv_burn
+.public recv_transferFrom
+.public recv_approve
+.public recv_setApprovalForAll
+.public ownerOf(1)
+.public getApproved(1)
+.public isApprovedForAll(2)
+.public balanceOf(1)
+
+owner(s) :- constructor(), msgSender(s).
+
+mint(to, tokenId) :- recv_mint(to, tokenId), msgSender(s), owner(s), to != 0.
+
+burn(from, from, tokenId) :- recv_burn(tokenId), msgSender(from), from != 0, ownerOf(tokenId, from).
+burn(from, s, tokenId) :- recv_burn(tokenId), msgSender(s), from != 0, s != 0,
+                          ownerOf(tokenId, from), getApproved(tokenId, s).
+
+transferFrom(from, to, from, tokenId) :- recv_transferFrom(from, to, tokenId), msgSender(from),
+                                         from != 0, to != 0, ownerOf(tokenId, from).
+transferFrom(from, to, s, tokenId) :- recv_transferFrom(from, to, tokenId), msgSender(s),
+                                      from != 0, to != 0, s != 0, ownerOf(tokenId, from),
+                                      isApprovedForAll(from, s, true).
+transferFrom(from, to, s, tokenId) :- recv_transferFrom(from, to, tokenId), msgSender(s),
+                                      from != 0, to != 0, s != 0, ownerOf(tokenId, from),
+                                      getApproved(tokenId, s).
+
+approveAction(o, approved, tokenId) :- recv_approve(approved, tokenId), msgSender(o),
+                                       o != 0, ownerOf(tokenId, o), approved != o.
+
+setApprovalForAllAction(o, operator, approved) :- recv_setApprovalForAll(operator, approved), msgSender(o),
+                                                  o != 0, operator != 0, operator != o.
+isApprovedForAll(o, operator, approved) :- setApprovalForAllAction(o, operator, approved).
+
+.decl initialBalance(p: address, n: uint)
+.decl totalInitial(p: address, n: uint)[0]
+.decl totalMint(p: address, n: uint)[0]
+.decl totalBurn(p: address, n: uint)[0]
+.decl totalOut(p: address, n: uint)[0]
+.decl totalIn(p: address, n: uint)[0]
+
+initialBalance(p, 0) :- mint(p, _).
+initialBalance(p, 0) :- burn(p, _, _).
+initialBalance(p, 0) :- transferFrom(p, _, _, _).
+initialBalance(p, 0) :- transferFrom(_, p, _, _).
+
+totalInitial(p, s) :- initialBalance(p, _), s = sum n: initialBalance(p, n).
+totalMint(p, s) :- mint(p, _), s = count: mint(p, _).
+totalBurn(p, s) :- burn(p, _, _), s = count: burn(p, _, _).
+totalOut(p, s) :- transferFrom(p, _, _, _), s = count: transferFrom(p, _, _, _).
+totalIn(p, s) :- transferFrom(_, p, _, _), s = count: transferFrom(_, p, _, _).
+
+balanceOf(p, s) :- totalInitial(p, i), totalMint(p, m), totalBurn(p, b), totalOut(p, o), totalIn(p, ti),
+                   s := (((i + m) + ti) - b) - o.
+
+.decl initialApproval(tokenId: uint, approved: address)
+initialApproval(tokenId, 0) :- mint(_, tokenId).
+initialApproval(tokenId, 0) :- burn(_, _, tokenId).
+initialApproval(tokenId, 0) :- transferFrom(_, _, _, tokenId).
+initialApproval(tokenId, 0) :- approveAction(_, _, tokenId).
+
+getApproved(tokenId, 0) :- initialApproval(tokenId, _).
+getApproved(tokenId, approved) :- approveAction(_, approved, tokenId).
+getApproved(tokenId, 0) :- transferFrom(_, _, _, tokenId).
+getApproved(tokenId, 0) :- burn(_, _, tokenId).
+
+ownerOf(tokenId, to) :- mint(to, tokenId).
+ownerOf(tokenId, to) :- transferFrom(_, to, _, tokenId).
+ownerOf(tokenId, 0) :- burn(_, _, tokenId).
+
+.decl invalidOwnership(tokenId: uint, owner1: address, owner2: address)[0]
+.violation invalidOwnership
+invalidOwnership(tokenId, owner1, owner2) :- ownerOf(tokenId, owner1), ownerOf(tokenId, owner2),
+                                             owner1 != owner2, owner1 != 0, owner2 != 0.

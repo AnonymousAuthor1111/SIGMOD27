@@ -1,0 +1,5 @@
+redeemByPartition,constructor,,,6,,false
+redeemByPartition,issueByPartition,instance,accounts[6] 5 51,6,,false
+redeemByPartition,redeemByPartition,instance,accounts[6] 5 37,6,,false
+redeemByPartition,issueByPartition,instance,accounts[7] 10 85,6,,false
+redeemByPartition,redeemByPartition,instance,accounts[7] 10 73,6,,true

@@ -1,0 +1,3 @@
+approve,constructor,,402,4,,false
+approve,approve,instance,accounts[1] 215,4,,false
+approve,approve,instance,accounts[1] 720,4,,true

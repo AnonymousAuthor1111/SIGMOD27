@@ -1,0 +1,2 @@
+burn,constructor,,242,0,,false
+burn,burn,instance,77,0,,true

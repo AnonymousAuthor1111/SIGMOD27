@@ -1,0 +1,5 @@
+claimOwnership,constructor,,,8,,false
+claimOwnership,transferOwnership,instance,accounts[4],8,,false
+claimOwnership,claimOwnership,instance,,4,,false
+claimOwnership,transferOwnership,instance,accounts[3],4,,false
+claimOwnership,claimOwnership,instance,,3,,true

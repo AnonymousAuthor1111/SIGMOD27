@@ -1,0 +1,2 @@
+setRule,constructor,,589,0,,false
+setRule,setRule,instance,1 accounts[9] 295 13,0,,true

@@ -1,0 +1,14 @@
+#body,head,ruleId,isAgg,isTx
+msgSender,addVoter,0,false,true
+vote,votes,2,true,false
+wins,hasWinner,3,false,false
+votes,wins,4,false,false
+quorumSize,wins,4,false,false
+vote,voted,5,false,false
+wins,winningProposal,6,false,false
+addVoter,isVoter,7,false,false
+msgSender,vote,8,false,true
+hasWinner,vote,8,false,true
+voted,vote,8,false,true
+isVoter,vote,8,false,true
+wins,inconsistency,9,false,false

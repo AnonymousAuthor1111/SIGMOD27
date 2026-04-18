@@ -1,0 +1,4 @@
+mint,constructor,,1 accounts[8] accounts[9],0,,false
+mint,pause,instance,false,0,,false
+mint,mint,instance,accounts[4] 4,4,120000000000000000,false
+mint,mint,instance,accounts[4] 1,4,30000000000000000,true

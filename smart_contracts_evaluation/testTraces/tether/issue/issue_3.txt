@@ -1,0 +1,3 @@
+issue,constructor,,357,3,,false
+issue,issue,instance,138,3,,false
+issue,issue,instance,506,3,,true

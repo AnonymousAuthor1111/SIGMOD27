@@ -1,0 +1,8 @@
+allowanceTotal,operators,revokedDefaultOperator,balanceOf,defaultOperator,spentTotal,allBurn,allMint,,totalSupply,allowance
+totalSupply,operators,balanceOf,revokedDefaultOperator,defaultOperator,allowance,
+operators,allowance,totalOut,totalMint,revokedDefaultOperator,defaultOperator,totalIn,totalBurn,allBurn,allMint,,totalSupply,balanceOf
+totalSupply,operators,totalOut,totalMint,revokedDefaultOperator,defaultOperator,totalIn,totalBurn,allowance,,balanceOf
+operators,allowance,balanceOf,revokedDefaultOperator,defaultOperator,allBurn,allMint,,totalSupply
+allowanceTotal,operators,totalOut,spentTotal,totalMint,revokedDefaultOperator,defaultOperator,totalIn,totalBurn,allBurn,allMint,,totalSupply,balanceOf,allowance
+totalSupply,allowanceTotal,operators,revokedDefaultOperator,balanceOf,defaultOperator,spentTotal,,allowance
+totalSupply,allowanceTotal,operators,totalOut,spentTotal,totalMint,revokedDefaultOperator,defaultOperator,totalIn,totalBurn,,balanceOf,allowance

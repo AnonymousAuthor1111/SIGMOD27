@@ -1,0 +1,4 @@
+controllerTransfer,constructor,,accounts[4],3,,false
+controllerTransfer,mint,instance,accounts[9] 282,3,,false
+controllerTransfer,controllerTransfer,instance,accounts[9] accounts[8] 105,4,,false
+controllerTransfer,controllerTransfer,instance,accounts[9] accounts[8] 132,4,,true

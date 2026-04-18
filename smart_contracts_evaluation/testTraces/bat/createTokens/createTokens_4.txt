@@ -1,0 +1,3 @@
+createTokens,constructor,,accounts[7] accounts[1] 0 99999999999,7,,false
+createTokens,createTokens,instance,,0,1,,false
+createTokens,createTokens,instance,,0,1,,true

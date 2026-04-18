@@ -1,0 +1,4 @@
+increaseAllowanceTotal,owner,decreaseAllowanceTotal,spentTotal,balanceOf,,allowance
+totalInitial,totalInTransfer,owner,totalBurn,allowance,totalOutTransferFrom,totalInTransferFrom,totalOutTransfer,,balanceOf
+increaseAllowanceTotal,totalInitial,totalInTransfer,owner,totalBurn,decreaseAllowanceTotal,totalOutTransferFrom,spentTotal,totalInTransferFrom,totalOutTransfer,,allowance,balanceOf
+allowance,owner,balanceOf,

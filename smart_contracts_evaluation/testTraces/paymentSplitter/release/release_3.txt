@@ -1,0 +1,12 @@
+release,constructor,,,9,,false
+release,addPayee,instance,accounts[8] 16,9,,false
+release,addPayee,instance,accounts[2] 13,9,,false
+release,addPayee,instance,accounts[7] 16,9,,false
+release,addPayee,instance,accounts[6] 11,9,,false
+release,addPayee,instance,accounts[1] 42,9,,false
+release,finalizeSetup,instance,,9,,false
+release,release,instance,accounts[8],9,,true
+release,release,instance,accounts[2],9,,true
+release,release,instance,accounts[7],9,,true
+release,release,instance,accounts[6],9,,true
+release,release,instance,accounts[1],9,,true

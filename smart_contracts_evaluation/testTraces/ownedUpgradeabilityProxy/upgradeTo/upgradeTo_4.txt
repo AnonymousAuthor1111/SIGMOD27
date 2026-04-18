@@ -1,0 +1,3 @@
+upgradeTo,constructor,,,2,,false
+upgradeTo,upgradeTo,instance,accounts[3],2,,false
+upgradeTo,upgradeTo,instance,accounts[6],2,,true

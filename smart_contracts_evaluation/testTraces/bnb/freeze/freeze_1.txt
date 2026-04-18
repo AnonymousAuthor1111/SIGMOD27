@@ -1,0 +1,4 @@
+freeze,constructor,,164,,,false
+freeze,transfer,instance,accounts[0] 62,,,false
+freeze,freeze,instance,21,0,,false
+freeze,freeze,instance,29,0,,true

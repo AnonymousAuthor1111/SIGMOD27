@@ -1,0 +1,3 @@
+getPunk,constructor,,,0,,false
+getPunk,allInitialOwnersAssigned,instance,,0,,false
+getPunk,getPunk,instance,13,3,,true

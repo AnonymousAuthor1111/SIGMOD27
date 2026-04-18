@@ -1,0 +1,5 @@
+revokeOperator,constructor,,1 2,0,,false
+revokeOperator,authorizeOperator,instance,accounts[4],3,,false
+revokeOperator,revokeOperator,instance,accounts[4],3,,false
+revokeOperator,authorizeOperator,instance,accounts[5],3,,false
+revokeOperator,revokeOperator,instance,accounts[5],3,,true

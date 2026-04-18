@@ -1,0 +1,3 @@
+invest,constructor,,100000 accounts[0] 9999999999,4,,false
+invest,invest,instance,,6,3198,false
+invest,invest,instance,,6,2800,true

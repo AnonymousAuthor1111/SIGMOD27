@@ -1,0 +1,5 @@
+acceptBidForPunk,constructor,,,0,,false
+acceptBidForPunk,allInitialOwnersAssigned,instance,,0,,false
+acceptBidForPunk,getPunk,instance,15,1,,false
+acceptBidForPunk,enterBidForPunk,instance,15,6,190,false
+acceptBidForPunk,acceptBidForPunk,instance,15 140,1,,true

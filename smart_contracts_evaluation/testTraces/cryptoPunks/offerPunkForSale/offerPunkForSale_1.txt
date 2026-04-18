@@ -1,0 +1,4 @@
+offerPunkForSale,constructor,,,0,,false
+offerPunkForSale,allInitialOwnersAssigned,instance,,0,,false
+offerPunkForSale,getPunk,instance,12,2,,false
+offerPunkForSale,offerPunkForSale,instance,12 110,2,,true

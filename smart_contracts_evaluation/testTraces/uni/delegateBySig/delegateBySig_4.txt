@@ -1,0 +1,3 @@
+delegateBySig,constructor,,accounts[0] 771,0,,false
+delegateBySig,transfer,instance,accounts[7] 330,0,,false
+delegateBySig,delegateBySig,instance,accounts[7] accounts[4],0,,true

@@ -1,0 +1,6 @@
+withdraw,constructor,,,0,,false
+withdraw,allInitialOwnersAssigned,instance,,0,,false
+withdraw,getPunk,instance,13,3,,false
+withdraw,offerPunkForSale,instance,13 120,3,,false
+withdraw,buyPunk,instance,13,8,120,false
+withdraw,withdraw,instance,,3,,true

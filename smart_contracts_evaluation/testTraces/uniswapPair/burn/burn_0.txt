@@ -1,0 +1,4 @@
+burn,constructor,,,0,,false
+burn,initialize,instance,accounts[8] accounts[5],0,,false
+burn,mint,instance,accounts[4] 183 211,0,,false
+burn,burn,instance,accounts[6] 182,4,,true

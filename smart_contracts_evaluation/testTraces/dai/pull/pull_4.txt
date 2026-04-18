@@ -1,0 +1,5 @@
+pull,constructor,,1,0,,false
+pull,mint,instance,accounts[6] 572,0,,false
+pull,approve,instance,accounts[4] 83,6,,false
+pull,pull,instance,accounts[6] 14,4,,false
+pull,pull,instance,accounts[6] 26,4,,true

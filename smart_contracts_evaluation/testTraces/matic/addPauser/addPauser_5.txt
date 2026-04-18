@@ -1,0 +1,3 @@
+addPauser,constructor,,920,1,,false
+addPauser,addPauser,instance,accounts[4],1,,false
+addPauser,addPauser,instance,accounts[5],1,,true

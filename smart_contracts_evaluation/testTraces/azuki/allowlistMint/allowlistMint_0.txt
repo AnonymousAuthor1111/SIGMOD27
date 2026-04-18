@@ -1,0 +1,5 @@
+allowlistMint,constructor,,5 10000 5000 200,0,,false
+allowlistMint,endAuctionAndSetupNonAuctionSaleInfo,instance,100 150 10,0,,false
+allowlistMint,seedAllowlist,instance,accounts[1] 2,0,,false
+allowlistMint,allowlistMint,instance,,1,,false
+allowlistMint,allowlistMint,instance,,1,,true

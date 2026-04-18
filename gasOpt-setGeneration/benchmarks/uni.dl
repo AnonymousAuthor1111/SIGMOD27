@@ -1,0 +1,74 @@
+// Simplified UNI
+
+// Core state
+.decl *totalSupply(n: uint)
+.decl initialBalance(p: address, n: uint)
+.decl balanceOf(p: address, n: uint)[0]
+
+// Governance state
+.decl delegates(p: address, d: address)[0]
+.decl votes(d: address, n: uint)[0]
+
+// Constructor and external calls
+.decl constructor(holder: address, supply: uint)
+.decl recv_transfer(to: address, amount: uint)
+.decl recv_delegate(delegatee: address)
+.decl recv_delegateBySig(delegator: address, delegatee: address)
+
+// Internal actions
+.decl transfer(from: address, to: address, amount: uint)
+.decl delegateSet(delegator: address, delegatee: address)
+
+// Interfaces
+.public recv_transfer
+.public recv_delegate
+.public recv_delegateBySig
+.public balanceOf(1)
+.public delegates(1)
+.public votes(1)
+.public totalSupply(0)
+
+// Initial state
+initialBalance(p, n) :- constructor(p, n).
+totalSupply(n) :- constructor(_, n).
+
+// Track every address we might need a balance row for (seed with zero)
+initialBalance(p, 0) :- transfer(p, _, _).
+initialBalance(p, 0) :- transfer(_, p, _).
+initialBalance(p, 0) :- delegateSet(p, _).
+initialBalance(p, 0) :- delegateSet(_, p).
+
+// Transfers
+transfer(s, r, n) :- recv_transfer(r, n), msgSender(s), s != 0, r != 0, n > 0, balanceOf(s, m), m >= n.
+
+// Aggregate balance accounting
+.decl totalInitial(p: address, n: uint)[0]
+.decl outVal(p: address, n: uint)
+.decl inVal(p: address, n: uint)
+.decl totalOut(p: address, n: uint)[0]
+.decl totalIn(p: address, n: uint)[0]
+
+totalInitial(p, s) :- initialBalance(p, _), s = sum n: initialBalance(p, n).
+outVal(p, 0) :- initialBalance(p, _).
+outVal(p, n) :- transfer(p, _, n).
+inVal(p, 0) :- initialBalance(p, _).
+inVal(p, n) :- transfer(_, p, n).
+totalOut(p, s) :- outVal(p, _), s = sum n: outVal(p, n).
+totalIn(p, s) :- inVal(p, _), s = sum n: inVal(p, n).
+balanceOf(p, s) :- totalInitial(p, i), totalOut(p, o), totalIn(p, t), s := i + t - o.
+
+// Delegation. A delegator chooses one delegatee (modeled as keyed relation on delegator).
+// Votes count active delegators per delegatee rather than delegated balances.
+delegateSet(p, d) :- recv_delegate(d), msgSender(p), p != 0, d != 0.
+delegateSet(p, d) :- recv_delegateBySig(p, d), p != 0, d != 0.
+delegates(p, d) :- delegateSet(p, d).
+votes(d, c) :- delegates(_, d), c = count: delegates(_, d).
+
+// Diagnostic property: if a delegator sets delegation more than once, this model flags it.
+// (Full overwrite/history semantics like checkpoints are not modeled in this DSL version.)
+.decl delegateActionCount(p: address, c: uint)[0]
+.decl repeatedDelegation(p: address, c: uint)[0]
+.violation repeatedDelegation
+
+delegateActionCount(p, c) :- delegateSet(p, _), c = count: delegateSet(p, _).
+repeatedDelegation(p, c) :- delegateActionCount(p, c), c > 1.

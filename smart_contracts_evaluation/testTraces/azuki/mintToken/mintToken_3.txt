@@ -1,0 +1,3 @@
+mintToken,constructor,,5 10000 5000 200,0,,false
+mintToken,mintToken,instance,accounts[5] 937,0,,false
+mintToken,mintToken,instance,accounts[5] 1937,0,,true

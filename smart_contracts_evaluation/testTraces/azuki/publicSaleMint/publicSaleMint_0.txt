@@ -1,0 +1,5 @@
+publicSaleMint,constructor,,5 10000 5000 200,0,,false
+publicSaleMint,endAuctionAndSetupNonAuctionSaleInfo,instance,100 150 10,0,,false
+publicSaleMint,setPublicSaleKey,instance,777,0,,false
+publicSaleMint,publicSaleMint,instance,1 777,1,,false
+publicSaleMint,publicSaleMint,instance,2 777,1,,true

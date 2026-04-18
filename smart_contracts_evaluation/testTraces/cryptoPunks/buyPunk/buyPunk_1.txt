@@ -1,0 +1,5 @@
+buyPunk,constructor,,,0,,false
+buyPunk,allInitialOwnersAssigned,instance,,0,,false
+buyPunk,getPunk,instance,12,2,,false
+buyPunk,offerPunkForSale,instance,12 110,2,,false
+buyPunk,buyPunk,instance,12,7,110,true

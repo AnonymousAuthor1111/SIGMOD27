@@ -1,0 +1,158 @@
+// RepToken (REP2) - Augur Reputation Migration Token
+// Adopted from: https://etherscan.io/token/0x1985365e9f78359a9B6AD760e32412f4a445E862
+
+// State
+.decl *owner(p: address)
+.decl *paused(b: bool)
+// NOTE: `initialized` used to be a derived bool relation
+//   (initialized(true) :- totalSupply(ts), targetSupply(t), ts == t).
+// The compiler turned it into a zero-arg view `initialized()`, but still
+// emitted rule-body references as `initialized(true)` / `initialized(false)`,
+// which solc rejects. Workaround: remove the relation and inline the
+// comparison `totalSupply == targetSupply` at every use site below.
+.decl *legacyRepContract(p: address)
+.decl *targetSupply(n: uint)
+.decl *totalSupply(n: uint)
+.decl balanceOf(p: address, n: uint)[0]
+.decl allowance(p: address, s: address, n: uint)[0,1]
+
+// Constructor (4th param = legacyRepContract.totalSupply() external call result)
+.decl constructor(legacy: address, amountFreeze: uint, freezeAcct: address, target: uint)
+
+// ERC20 Transactions
+.decl transfer(from: address, to: address, amount: uint)
+.decl recv_transfer(to: address, amount: uint)
+.decl recv_transferFrom(from: address, to: address, amount: uint)
+.decl transferFrom(from: address, to: address, spender: address, amount: uint)
+.decl increaseAllowance(p: address, s: address, n: uint)
+.decl decreaseAllowance(p: address, s: address, n: uint)
+.decl recv_approve(s: address, n: uint)
+
+// Ownable
+.decl recv_transferOwnership(newOwner: address)
+.decl transferOwnership(newOwner: address)
+
+// Pausable
+.decl recv_pause()
+.decl pause()
+.decl recv_unpause()
+.decl unpause()
+
+// Migration
+.decl recv_migrateBalance(holder: address, legacyBalance: uint)
+.decl migrateBalance(holder: address, amount: uint)
+
+// Internal
+.decl mint(p: address, amount: uint)
+
+// Interfaces
+.public recv_transfer
+.public recv_transferFrom
+.public recv_approve
+.public recv_transferOwnership
+.public recv_pause
+.public recv_unpause
+.public recv_migrateBalance
+.public balanceOf(1)
+.public totalSupply(0)
+.public allowance(2)
+.public paused(0)
+.public owner(0)
+
+// ---- Constructor ----
+// require(_legacyRepContract != address(0))
+legacyRepContract(l) :- constructor(l, _, _, _), l != 0.
+owner(s) :- constructor(_, _, _, _), msgSender(s).
+// Constructor calls pause() -> paused = true
+paused(true) :- constructor(_, _, _, _).
+targetSupply(t) :- constructor(_, _, _, t).
+// Initial allocation: balances[freezeAcct] = amountUsedToFreeze
+mint(f, n) :- constructor(_, n, f, _), n > 0.
+
+// ---- transfer (whenNotPaused) ----
+transfer(s, r, n) :- recv_transfer(r, n), msgSender(s),
+    paused(false), balanceOf(s, m), n <= m.
+
+// ---- transferFrom (whenNotPaused) ----
+transferFrom(o, r, s, n) :- recv_transferFrom(o, r, n), msgSender(s),
+    paused(false),
+    balanceOf(o, m), m >= n,
+    allowance(o, s, k), k >= n.
+transfer(o, r, n) :- transferFrom(o, r, _, n).
+
+// ---- approve ----
+// require((_value == 0) || (allowed[sender][spender] == 0))
+// Case 1: new value > 0 AND current allowance == 0 -> increase
+increaseAllowance(o, s, d) :- recv_approve(s, n), msgSender(o), n > 0,
+    allowance(o, s, m), m == 0, d := n - m.
+// Case 2: new value == 0 AND current allowance > 0 -> decrease to zero
+decreaseAllowance(o, s, d) :- recv_approve(s, n), msgSender(o), n == 0,
+    allowance(o, s, m), m > 0, d := m.
+
+.decl allowanceTotal(o: address, s: address, m: uint)[0,1]
+.decl decreaseTotal(o: address, s: address, m: uint)[0,1]
+.decl spentTotal(o: address, s: address, m: uint)[0,1]
+allowanceTotal(o, s, m) :- increaseAllowance(o, s, _), m = sum n: increaseAllowance(o, s, n).
+decreaseTotal(o, s, m) :- decreaseAllowance(o, s, _), m = sum n: decreaseAllowance(o, s, n).
+spentTotal(o, s, m) :- transferFrom(o, _, s, _), m = sum n: transferFrom(o, _, s, n).
+allowance(o, s, n) :- allowanceTotal(o, s, m), spentTotal(o, s, l), decreaseTotal(o, s, d), n := m - l - d.
+
+// ---- transferOwnership ----
+// if (newOwner != address(0)) owner = newOwner
+transferOwnership(a) :- recv_transferOwnership(a), msgSender(s), owner(s), a != 0.
+owner(a) :- transferOwnership(a).
+
+// ---- pause / unpause ----
+// pause: onlyOwner, whenNotPaused
+pause() :- recv_pause(), msgSender(s), owner(s), paused(false).
+paused(true) :- pause().
+
+// unpause: onlyOwner, whenPaused, afterInitialized
+// initialized(true) inlined as totalSupply == targetSupply (see note at top).
+unpause() :- recv_unpause(), msgSender(s), owner(s), paused(true),
+    totalSupply(ts), targetSupply(t), ts == t.
+paused(false) :- unpause().
+
+// ---- migrateBalance ----
+// onlyOwner, beforeInitialized
+// legacyBalance > 0 required (skip if 0)
+// In Solidity: balances[holder] > 0 check skips re-migration; here we rely on
+// each recv_migrateBalance(holder, _) being called at most once per holder.
+// initialized(false) inlined as totalSupply != targetSupply (see note at top).
+migrateBalance(h, amt) :- recv_migrateBalance(h, amt),
+    msgSender(s), owner(s),
+    totalSupply(ts), targetSupply(t), ts != t,
+    amt > 0.
+mint(h, amt) :- migrateBalance(h, amt).
+
+// ---- Balance / totalSupply computation ----
+.decl totalMint(p: address, n: uint)[0]
+.decl totalOut(p: address, n: uint)[0]
+.decl totalIn(p: address, n: uint)[0]
+totalOut(p, s) :- transfer(p, _, _), s = sum n: transfer(p, _, n).
+totalIn(p, s) :- transfer(_, p, _), s = sum n: transfer(_, p, n).
+totalMint(p, s) :- mint(p, _), s = sum n: mint(p, n).
+balanceOf(p, s) :- totalMint(p, n), totalOut(p, o), totalIn(p, i), s := n + i - o.
+
+.decl *allMint(n: uint)
+allMint(s) :- s = sum n: mint(_, n).
+totalSupply(n) :- allMint(n).
+
+// ---- Properties ----
+// totalSupply should never exceed targetSupply
+.decl *exceedTarget(ts: uint, t: uint)
+.violation exceedTarget
+exceedTarget(ts, t) :- totalSupply(ts), targetSupply(t), ts > t.
+
+// totalSupply must equal sum of balances
+.decl *totalBalances(m: uint)
+.decl *unequalBalance(s: uint, n: uint)
+.violation unequalBalance
+totalBalances(0) :- constructor(_, _, _, _).
+totalBalances(s) :- s = sum n: balanceOf(_, n).
+unequalBalance(s, n) :- totalBalances(s), totalSupply(n), s != n.
+
+// Cannot unpause before initialization
+.decl *unpausedBeforeInit()
+.violation unpausedBeforeInit
+unpausedBeforeInit() :- paused(false), totalSupply(ts), targetSupply(t), ts != t.

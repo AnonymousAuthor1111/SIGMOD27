@@ -1,0 +1,4 @@
+auctionMint,constructor,,5 10000 5000 200,0,,false
+auctionMint,setAuctionSaleStartTime,instance,1,0,,false
+auctionMint,auctionMint,instance,1,5,,false
+auctionMint,auctionMint,instance,2,5,,true

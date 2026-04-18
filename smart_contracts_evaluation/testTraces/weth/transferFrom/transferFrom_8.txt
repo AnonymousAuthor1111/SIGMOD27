@@ -1,0 +1,5 @@
+transferFrom,constructor,,,5,,false
+transferFrom,deposit,instance,,5,10000,,false
+transferFrom,approve,instance,accounts[3] 8000,5,,false
+transferFrom,transferFrom,instance,accounts[5] accounts[4] 104,3,,false
+transferFrom,transferFrom,instance,accounts[5] accounts[4] 356,3,,true

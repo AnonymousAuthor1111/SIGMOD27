@@ -1,0 +1,92 @@
+// ZRX - 0x Protocol Token
+// Adopted from: https://etherscan.io/address/0xe41d2489571d322189246dafa5ebde1f4699f498
+
+// State
+.decl *totalSupply(n: uint)
+.decl balanceOf(p: address, n: uint)[0]
+.decl allowance(p: address, s: address, n: uint)[0,1]
+.decl *maxUint(n: uint)
+
+// Constructor
+.decl constructor()
+
+// ERC20 Transactions
+.decl transfer(from: address, to: address, amount: uint)
+.decl recv_transfer(to: address, amount: uint)
+.decl recv_transferFrom(from: address, to: address, amount: uint)
+.decl transferFrom(from: address, to: address, spender: address, amount: uint)
+.decl transferFromLimited(from: address, to: address, spender: address, amount: uint)
+.decl increaseAllowance(p: address, s: address, n: uint)
+.decl decreaseAllowance(p: address, s: address, n: uint)
+.decl recv_approve(s: address, n: uint)
+
+// Internal
+.decl mint(p: address, amount: uint)
+
+// Interfaces
+.public recv_transfer
+.public recv_transferFrom
+.public recv_approve
+.public balanceOf(1)
+.public totalSupply(0)
+.public allowance(2)
+
+// ---- Constructor ----
+// MAX_UINT represents unlimited allowance sentinel
+maxUint(n) :- constructor(), n:=999999999999.
+// totalSupply = 10^27 (1 billion tokens, 18 decimals), simplified
+totalSupply(n) :- constructor(), n:=1000000000.
+// All tokens allocated to deployer
+mint(s, n) :- constructor(), msgSender(s), n:=1000000000.
+
+// ---- ERC20 transfer ----
+// ZRX checks: balances[sender] >= value && balances[to] + value >= balances[to]
+// No explicit value > 0 check in original
+transfer(s, r, n) :- recv_transfer(r, n), msgSender(s), balanceOf(s, m), n <= m.
+
+// ---- ERC20 transferFrom (UnlimitedAllowanceToken) ----
+// Transfers succeed if balance and allowance are sufficient
+transferFrom(o, r, s, n) :- recv_transferFrom(o, r, n),
+    balanceOf(o, m), m >= n,
+    msgSender(s), allowance(o, s, k), k >= n.
+transfer(o, r, n) :- transferFrom(o, r, _, n).
+
+// Only deduct from allowance when allowance < MAX_UINT (unlimited allowance feature)
+// transferFromLimited(o, r, s, n) :- transferFrom(o, r, s, n),
+//     allowance(o, s, k), maxUint(max), k != max.
+transferFromLimited(o, r, s, n) :- recv_transferFrom(o, r, n),
+    balanceOf(o, m), m >= n,
+    msgSender(s), allowance(o, s, k),
+    maxUint(max), k >= n, k != max.
+
+// ---- ERC20 approve ----
+// approve sets allowance to exact value: model via increase/decrease delta
+increaseAllowance(o, s, d) :- recv_approve(s, n), msgSender(o), allowance(o, s, m), n > m, d := n - m.
+decreaseAllowance(o, s, d) :- recv_approve(s, n), msgSender(o), allowance(o, s, m), n < m, d := m - n.
+
+.decl allowanceTotal(o: address, s: address, m: uint)[0,1]
+.decl decreaseTotal(o: address, s: address, m: uint)[0,1]
+.decl spentTotal(o: address, s: address, m: uint)[0,1]
+allowanceTotal(o, s, m) :- increaseAllowance(o, s, _), m = sum n: increaseAllowance(o, s, n).
+decreaseTotal(o, s, m) :- decreaseAllowance(o, s, _), m = sum n: decreaseAllowance(o, s, n).
+// spentTotal only counts limited (non-unlimited) transferFrom
+spentTotal(o, s, m) :- transferFromLimited(o, _, s, _), m = sum n: transferFromLimited(o, _, s, n).
+allowance(o, s, n) :- allowanceTotal(o, s, m), spentTotal(o, s, l), decreaseTotal(o, s, d), n := m - l - d.
+
+// ---- Balance computation ----
+// ZRX is fixed-supply (no mint/burn after constructor), only transfers move tokens
+.decl totalMint(p: address, n: uint)[0]
+.decl totalOut(p: address, n: uint)[0]
+.decl totalIn(p: address, n: uint)[0]
+totalOut(p, s) :- transfer(p, _, _), s = sum n: transfer(p, _, n).
+totalIn(p, s) :- transfer(_, p, _), s = sum n: transfer(_, p, n).
+totalMint(p, s) :- mint(p, _), s = sum n: mint(p, n).
+balanceOf(p, s) :- totalMint(p, n), totalOut(p, o), totalIn(p, i), s := n + i - o.
+
+// ---- Properties ----
+.decl *totalBalances(m: uint)
+.decl *unequalBalance(s: uint, n: uint)
+.violation unequalBalance
+totalBalances(0) :- constructor().
+totalBalances(s) :- s = sum n: balanceOf(_, n).
+unequalBalance(s, n) :- totalBalances(s), totalSupply(n), s != n.

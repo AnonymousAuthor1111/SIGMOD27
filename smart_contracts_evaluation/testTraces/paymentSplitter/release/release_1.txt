@@ -1,0 +1,10 @@
+release,constructor,,,8,,false
+release,addPayee,instance,accounts[2] 28,8,,false
+release,addPayee,instance,accounts[0] 25,8,,false
+release,addPayee,instance,accounts[6] 44,8,,false
+release,addPayee,instance,accounts[1] 22,8,,false
+release,finalizeSetup,instance,,8,,false
+release,release,instance,accounts[2],8,,true
+release,release,instance,accounts[0],8,,true
+release,release,instance,accounts[6],8,,true
+release,release,instance,accounts[1],8,,true

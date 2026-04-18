@@ -1,0 +1,4 @@
+swap,constructor,,,0,,false
+swap,initialize,instance,accounts[2] accounts[8],0,,false
+swap,mint,instance,accounts[9] 219 190,0,,false
+swap,swap,instance,22 0 0 16 accounts[4],0,,true

@@ -1,0 +1,3 @@
+transferProxyOwnership,constructor,,,9,,false
+transferProxyOwnership,transferProxyOwnership,instance,accounts[8],9,,false
+transferProxyOwnership,transferProxyOwnership,instance,accounts[1],9,,true

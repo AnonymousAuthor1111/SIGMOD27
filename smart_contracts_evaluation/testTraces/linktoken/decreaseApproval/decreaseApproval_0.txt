@@ -1,0 +1,4 @@
+decreaseApproval,constructor,,238,1,,false
+decreaseApproval,approve,instance,accounts[5] 194,1,,false
+decreaseApproval,decreaseApproval,instance,accounts[5] 94,1,,false
+decreaseApproval,decreaseApproval,instance,accounts[5] 89,1,,true

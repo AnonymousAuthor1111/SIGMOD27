@@ -1,0 +1,6 @@
+transferFrom,constructor,,accounts[8] 1000 accounts[0] 1500,3,,false
+transferFrom,migrateBalance,instance,accounts[6] 500,3,,false
+transferFrom,unpause,instance,,3,,false
+transferFrom,approve,instance,accounts[7] 300,6,,false
+transferFrom,transferFrom,instance,accounts[6] accounts[8] 35,7,,false
+transferFrom,transferFrom,instance,accounts[6] accounts[8] 83,7,,true

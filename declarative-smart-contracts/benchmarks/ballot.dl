@@ -1,0 +1,78 @@
+/**
+  Ballot - Voting with delegation
+  Reference: https://docs.soliditylang.org/en/v0.8.11/solidity-by-example.html#voting
+ */
+
+// Config
+.decl *chairperson(p: address)
+.decl constructor(numProposals: uint)
+
+// Receive interfaces
+.decl recv_giveRightToVote(voter: address)
+.decl recv_delegate(to: address)
+.decl recv_vote(proposal: uint)
+
+.public recv_giveRightToVote
+.public recv_delegate
+.public recv_vote
+
+// Transactions
+.decl giveRightToVote(voter: address)
+.decl delegate(sender: address, to: address)
+.decl vote(voter: address, proposal: uint)
+
+// State
+.decl hasRight(voter: address, b: bool)[0]
+.public hasRight(1)
+.decl voted(voter: address, b: bool)[0]
+.public voted(1)
+.decl voteCount(proposal: uint, c: uint)[0]
+.public voteCount(1)
+.decl *winningProposal(p: uint, maxVotes: uint)
+.public winningProposal(0)
+
+// Constructor: chairperson is msg.sender and gets voting right
+chairperson(s) :- constructor(_), msgSender(s).
+hasRight(s, true) :- constructor(_), msgSender(s).
+
+// giveRightToVote: only chairperson can call, voter hasn't voted and has no right yet
+giveRightToVote(v) :- recv_giveRightToVote(v), msgSender(s), chairperson(s), voted(v, false), hasRight(v, false), v != 0.
+hasRight(v, true) :- giveRightToVote(v).
+
+// delegate: must have voting right, not yet voted, no self-delegation
+delegate(s, to) :- recv_delegate(to), msgSender(s), hasRight(s, true), voted(s, false), s != to, to != 0.
+voted(s, true) :- delegate(s, _).
+.decl effectiveDelegate(delegator: address, to: address)[1]
+.decl effectivedelegator(to: address, delegator: address)[0]
+effectiveDelegate(s, to) :- delegate(s, to).
+effectivedelegator(to, s) :- effectiveDelegate(s, to).
+
+// vote: must have voting right, not yet voted
+vote(s, p) :- recv_vote(p), msgSender(s), hasRight(s, true), voted(s, false), p!=0.
+voted(s, true) :- vote(s, _).
+
+// Effective vote: a voter's vote reaches a proposal either directly or through delegation chain
+.decl effectiveVote(voter: address, proposal: uint)[0]
+effectiveVote(v, p) :- vote(v, p).
+effectiveVote(v, p) :- effectivedelegator(d, v), effectiveVote(d, p), v!=0, p!=0.
+
+// Vote counting: count all effective votes per proposal
+voteCount(p, c) :- effectiveVote(_, p), c = count: effectiveVote(_, p).
+
+// Winning proposal: proposal with the highest vote count
+winningProposal(p, c) :- voteCount(p, c), c = max n: voteCount(_, n).
+
+// Properties / Violations
+
+// A voter must not both vote directly and delegate
+.decl voteAndDelegate(v: address)[0]
+.violation voteAndDelegate
+voteAndDelegate(v) :- vote(v, _), delegate(v, _).
+
+// No delegation cycles allowed
+.decl delegateChain(sender: address, to: address)[0,1]
+delegateChain(a, b) :- delegate(a, b).
+delegateChain(a, c) :- delegateChain(a, b), delegate(b, c).
+.decl delegationCycle(v: address)[0]
+.violation delegationCycle
+delegationCycle(v) :- delegateChain(v, v).

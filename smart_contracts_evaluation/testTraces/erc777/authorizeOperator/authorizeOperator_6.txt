@@ -1,0 +1,3 @@
+authorizeOperator,constructor,,1 2,8,,false
+authorizeOperator,authorizeOperator,instance,accounts[4],3,,false
+authorizeOperator,authorizeOperator,instance,accounts[4],3,,true

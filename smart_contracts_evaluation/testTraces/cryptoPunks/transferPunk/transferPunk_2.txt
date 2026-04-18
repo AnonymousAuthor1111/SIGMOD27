@@ -1,0 +1,4 @@
+transferPunk,constructor,,,0,,false
+transferPunk,allInitialOwnersAssigned,instance,,0,,false
+transferPunk,getPunk,instance,13,3,,false
+transferPunk,transferPunk,instance,accounts[5] 13,3,,true

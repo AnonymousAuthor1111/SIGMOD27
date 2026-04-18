@@ -1,0 +1,4 @@
+transfer,constructor,,accounts[8],7,,false
+transfer,unpause,instance,,7,,false
+transfer,transfer,instance,accounts[2] 0,6,,false
+transfer,transfer,instance,accounts[2] 0,6,,true

@@ -1,0 +1,4 @@
+approve,constructor,,accounts[9] 1000 accounts[5] 15000,3,,false
+approve,approve,instance,accounts[7] 373,4,,false
+approve,approve,instance,accounts[7] 0,4,,false
+approve,approve,instance,accounts[7] 459,4,,true

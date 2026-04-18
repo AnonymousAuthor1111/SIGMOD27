@@ -1,0 +1,3 @@
+upgradeToAndCall,constructor,,accounts[9],6,,false
+upgradeToAndCall,upgradeToAndCall,instance,accounts[2],6,,false
+upgradeToAndCall,upgradeToAndCall,instance,accounts[7],6,,true

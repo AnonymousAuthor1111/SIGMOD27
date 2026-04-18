@@ -1,0 +1,177 @@
+.decl *owner(p: address)
+.decl *maxPerAddressDuringMint(n: uint)
+.decl *collectionSize(n: uint)
+.decl *amountForAuctionAndDev(n: uint)
+.decl *amountForDevs(n: uint)
+
+.decl auctionSaleStartTime(t: uint)[]
+.decl publicSaleStartTime(t: uint)[]
+.decl mintlistPrice(n: uint)[]
+.decl publicPrice(n: uint)[]
+.decl publicSaleKey(n: uint)[]
+
+.decl ownerOf(tokenId: uint, o: address)[0]
+.decl getApproved(tokenId: uint, approved: address)[0]
+.decl isApprovedForAll(o: address, operator: address, approved: bool)[0,1]
+.decl balanceOf(p: address, n: uint)[0]
+.decl numberMinted(p: address, n: uint)[0]
+.decl allowlist(p: address, n: uint)[0]
+
+.decl constructor(maxBatchSize: uint, collectionSize_: uint, amountForAuctionAndDev_: uint, amountForDevs_: uint)
+
+.decl recv_auctionMint(quantity: uint)
+.decl recv_allowlistMint()
+.decl recv_publicSaleMint(quantity: uint, callerPublicSaleKey: uint)
+.decl recv_endAuctionAndSetupNonAuctionSaleInfo(mintlistPriceWei: uint, publicPriceWei: uint, publicSaleStartTime_: uint)
+.decl recv_setAuctionSaleStartTime(timestamp: uint)
+.decl recv_setPublicSaleKey(key: uint)
+.decl recv_seedAllowlist(account: address, slots: uint)
+.decl recv_devMint(quantity: uint)
+.decl recv_mintToken(to: address, tokenId: uint)
+.decl recv_transferFrom(from: address, to: address, tokenId: uint)
+.decl recv_approve(approved: address, tokenId: uint)
+.decl recv_setApprovalForAll(operator: address, approved: bool)
+
+.decl auctionMintAction(to: address, quantity: uint)
+.decl allowlistMintAction(to: address)
+.decl publicSaleMintAction(to: address, quantity: uint)
+.decl endAuctionAndSetupNonAuctionSaleInfoAction(mintlistPriceWei: uint, publicPriceWei: uint, publicSaleStartTime_: uint)
+.decl setAuctionSaleStartTimeAction(timestamp: uint)
+.decl setPublicSaleKeyAction(key: uint)
+.decl seedAllowlistAction(account: address, slots: uint)
+.decl devMintAction(to: address, quantity: uint)
+.decl mintToken(to: address, tokenId: uint)
+.decl transferFrom(from: address, to: address, operator: address, tokenId: uint)
+.decl approveAction(o: address, approved: address, tokenId: uint)
+.decl setApprovalForAllAction(o: address, operator: address, approved: bool)
+
+.public recv_auctionMint
+.public recv_allowlistMint
+.public recv_publicSaleMint
+.public recv_endAuctionAndSetupNonAuctionSaleInfo
+.public recv_setAuctionSaleStartTime
+.public recv_setPublicSaleKey
+.public recv_seedAllowlist
+.public recv_devMint
+.public recv_mintToken
+.public recv_transferFrom
+.public recv_approve
+.public recv_setApprovalForAll
+.public auctionSaleStartTime(0)
+.public publicSaleStartTime(0)
+.public mintlistPrice(0)
+.public publicPrice(0)
+.public publicSaleKey(0)
+.public ownerOf(1)
+.public getApproved(1)
+.public isApprovedForAll(2)
+.public balanceOf(1)
+.public numberMinted(1)
+.public allowlist(1)
+
+owner(s) :- constructor(_, _, _, _), msgSender(s).
+maxPerAddressDuringMint(n) :- constructor(n, _, _, _).
+collectionSize(n) :- constructor(_, n, _, _).
+amountForAuctionAndDev(n) :- constructor(_, _, n, _).
+amountForDevs(n) :- constructor(_, _, _, n).
+
+auctionSaleStartTime(0) :- constructor(_, _, _, _).
+publicSaleStartTime(0) :- constructor(_, _, _, _).
+mintlistPrice(0) :- constructor(_, _, _, _).
+publicPrice(0) :- constructor(_, _, _, _).
+publicSaleKey(0) :- constructor(_, _, _, _).
+
+setAuctionSaleStartTimeAction(t) :- recv_setAuctionSaleStartTime(t), msgSender(s), owner(s).
+auctionSaleStartTime(t) :- setAuctionSaleStartTimeAction(t).
+
+setPublicSaleKeyAction(k) :- recv_setPublicSaleKey(k), msgSender(s), owner(s).
+publicSaleKey(k) :- setPublicSaleKeyAction(k).
+
+endAuctionAndSetupNonAuctionSaleInfoAction(mp, pp, pst) :- recv_endAuctionAndSetupNonAuctionSaleInfo(mp, pp, pst),
+                                                          msgSender(s), owner(s).
+mintlistPrice(mp) :- endAuctionAndSetupNonAuctionSaleInfoAction(mp, _, _).
+publicPrice(pp) :- endAuctionAndSetupNonAuctionSaleInfoAction(_, pp, _).
+publicSaleStartTime(pst) :- endAuctionAndSetupNonAuctionSaleInfoAction(_, _, pst).
+auctionSaleStartTime(0) :- endAuctionAndSetupNonAuctionSaleInfoAction(_, _, _).
+
+seedAllowlistAction(a, n) :- recv_seedAllowlist(a, n), msgSender(s), owner(s), a != 0.
+
+auctionMintAction(s, q) :- recv_auctionMint(q), msgSender(s), s != 0,
+                           auctionSaleStartTime(ast), ast > 0,
+                           amountForAuctionAndDev(limit), q <= limit,
+                           numberMinted(s, minted), maxPerAddressDuringMint(maxMint), minted + q <= maxMint,
+                           q > 0.
+
+allowlistMintAction(s) :- recv_allowlistMint(), msgSender(s), s != 0,
+                          mintlistPrice(price), price > 0,
+                          allowlist(s, slots), slots > 0.
+
+publicSaleMintAction(s, q) :- recv_publicSaleMint(q, keyIn), msgSender(s), s != 0,
+                              publicSaleKey(key), key > 0, key == keyIn,
+                              publicPrice(price), price > 0,
+                              publicSaleStartTime(start), start > 0,
+                              numberMinted(s, minted), maxPerAddressDuringMint(maxMint), minted + q <= maxMint,
+                              q > 0.
+
+devMintAction(s, q) :- recv_devMint(q), msgSender(s), owner(s),
+                       amountForDevs(limit), q <= limit,
+                       q > 0.
+
+mintToken(to, tokenId) :- recv_mintToken(to, tokenId), msgSender(s), owner(s), to != 0.
+
+transferFrom(from, to, from, tokenId) :- recv_transferFrom(from, to, tokenId), msgSender(from),
+                                         from != 0, to != 0, ownerOf(tokenId, from).
+transferFrom(from, to, s, tokenId) :- recv_transferFrom(from, to, tokenId), msgSender(s),
+                                      from != 0, to != 0, s != 0, ownerOf(tokenId, from),
+                                      isApprovedForAll(from, s, true).
+transferFrom(from, to, s, tokenId) :- recv_transferFrom(from, to, tokenId), msgSender(s),
+                                      from != 0, to != 0, s != 0, ownerOf(tokenId, from),
+                                      getApproved(tokenId, s).
+
+approveAction(o, approved, tokenId) :- recv_approve(approved, tokenId), msgSender(o),
+                                       o != 0, ownerOf(tokenId, o), approved != o.
+
+setApprovalForAllAction(o, operator, approved) :- recv_setApprovalForAll(operator, approved), msgSender(o),
+                                                  o != 0, operator != 0, operator != o.
+isApprovedForAll(o, operator, approved) :- setApprovalForAllAction(o, operator, approved).
+
+.decl totalAuctionBy(p: address, n: uint)[0]
+.decl totalAllowlistBy(p: address, n: uint)[0]
+.decl totalPublicBy(p: address, n: uint)[0]
+.decl totalDevBy(p: address, n: uint)[0]
+.decl initialBalance(p: address, n: uint)
+.decl totalInitial(p: address, n: uint)[0]
+.decl totalTokenMint(p: address, n: uint)[0]
+.decl totalTokenOut(p: address, n: uint)[0]
+.decl totalTokenIn(p: address, n: uint)[0]
+totalAuctionBy(p, s) :- auctionMintAction(p, _), s = sum n: auctionMintAction(p, n).
+totalAllowlistBy(p, s) :- allowlistMintAction(p), s = count: allowlistMintAction(p).
+totalPublicBy(p, s) :- publicSaleMintAction(p, _), s = sum n: publicSaleMintAction(p, n).
+totalDevBy(p, s) :- devMintAction(p, _), s = sum n: devMintAction(p, n).
+initialBalance(p, 0) :- mintToken(p, _).
+initialBalance(p, 0) :- transferFrom(p, _, _, _).
+initialBalance(p, 0) :- transferFrom(_, p, _, _).
+totalInitial(p, s) :- initialBalance(p, _), s = sum n: initialBalance(p, n).
+totalTokenMint(p, s) :- mintToken(p, _), s = count: mintToken(p, _).
+totalTokenOut(p, s) :- transferFrom(p, _, _, _), s = count: transferFrom(p, _, _, _).
+totalTokenIn(p, s) :- transferFrom(_, p, _, _), s = count: transferFrom(_, p, _, _).
+
+numberMinted(p, s) :- totalAuctionBy(p, a), totalAllowlistBy(p, l),
+                      totalPublicBy(p, pb), totalDevBy(p, d), s := a + l + pb + d.
+
+balanceOf(p, s) :- totalInitial(p, i), totalTokenMint(p, m), totalTokenOut(p, o), totalTokenIn(p, ti),
+                   s := ((i + m) + ti) - o.
+
+.decl initialApproval(tokenId: uint, approved: address)
+initialApproval(tokenId, 0) :- mintToken(_, tokenId).
+initialApproval(tokenId, 0) :- transferFrom(_, _, _, tokenId).
+initialApproval(tokenId, 0) :- approveAction(_, _, tokenId).
+
+getApproved(tokenId, 0) :- initialApproval(tokenId, _).
+getApproved(tokenId, approved) :- approveAction(_, approved, tokenId).
+getApproved(tokenId, 0) :- transferFrom(_, _, _, tokenId).
+
+ownerOf(tokenId, to) :- mintToken(to, tokenId).
+ownerOf(tokenId, to) :- transferFrom(_, to, _, tokenId).
+
+allowlist(p, s) :- seedAllowlistAction(p, _), s = sum n: seedAllowlistAction(p, n).

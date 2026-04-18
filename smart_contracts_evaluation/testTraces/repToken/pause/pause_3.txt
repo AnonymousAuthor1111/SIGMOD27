@@ -1,0 +1,4 @@
+pause,constructor,,accounts[7] 1000 accounts[2] 1500,9,,false
+pause,migrateBalance,instance,accounts[6] 500,9,,false
+pause,unpause,instance,,9,,false
+pause,pause,instance,,9,,true

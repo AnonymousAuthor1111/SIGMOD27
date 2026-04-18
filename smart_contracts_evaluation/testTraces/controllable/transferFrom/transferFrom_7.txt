@@ -1,0 +1,5 @@
+transferFrom,constructor,,accounts[8],5,,false
+transferFrom,mint,instance,accounts[8] 218,5,,false
+transferFrom,approve,instance,accounts[2] 53,8,,false
+transferFrom,transferFrom,instance,accounts[8] accounts[4] 11,2,,false
+transferFrom,transferFrom,instance,accounts[8] accounts[4] 12,2,,true

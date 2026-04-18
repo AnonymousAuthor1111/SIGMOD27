@@ -1,0 +1,3 @@
+transferOwnership,constructor,,accounts[4] 1000 accounts[2] 15000,1,,false
+transferOwnership,transferOwnership,instance,accounts[6],1,,false
+transferOwnership,transferOwnership,instance,accounts[4],6,,true

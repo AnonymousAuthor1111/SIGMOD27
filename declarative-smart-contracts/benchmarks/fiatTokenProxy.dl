@@ -1,0 +1,60 @@
+// FiatTokenProxy - USDC Proxy Contract (AdminUpgradeabilityProxy)
+// Adopted from: https://etherscan.io/address/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+
+// State
+.decl *admin(p: address)
+.decl *implementation(p: address)
+
+// Constructor
+.decl constructor(impl: address)
+
+// Transactions
+.decl recv_changeAdmin(newAdmin: address)
+.decl changeAdmin(oldAdmin: address, newAdmin: address)
+
+.decl recv_upgradeTo(newImpl: address)
+.decl upgradeTo(newImpl: address)
+
+.decl recv_upgradeToAndCall(newImpl: address)
+.decl upgradeToAndCall(newImpl: address)
+
+// Interfaces
+.public recv_changeAdmin
+.public recv_upgradeTo
+.public recv_upgradeToAndCall
+.public admin(0)
+.public implementation(0)
+
+// ---- Constructor ----
+// admin = msg.sender, implementation = _impl
+admin(s) :- constructor(_), msgSender(s).
+implementation(i) :- constructor(i), i != 0.
+
+// ---- changeAdmin ----
+// ifAdmin modifier: only admin can call
+// require(newAdmin != address(0))
+changeAdmin(old, a) :- recv_changeAdmin(a), msgSender(s), admin(s), a != 0, admin(old).
+admin(a) :- changeAdmin(_, a).
+
+// ---- upgradeTo ----
+// ifAdmin modifier: only admin can call
+// _setImplementation requires non-zero (isContract check approximated as != 0)
+upgradeTo(i) :- recv_upgradeTo(i), msgSender(s), admin(s), i != 0.
+implementation(i) :- upgradeTo(i).
+
+// ---- upgradeToAndCall ----
+// ifAdmin modifier: only admin can call
+// Upgrades implementation and calls it (call effect is out of scope for proxy)
+upgradeToAndCall(i) :- recv_upgradeToAndCall(i), msgSender(s), admin(s), i != 0.
+implementation(i) :- upgradeToAndCall(i).
+
+// ---- Properties ----
+// Admin should never be zero address after initialization
+.decl *zeroAdmin()
+.violation zeroAdmin
+zeroAdmin() :- admin(a), a == 0.
+
+// Implementation should never be zero address
+.decl *zeroImpl()
+.violation zeroImpl
+zeroImpl() :- implementation(a), a == 0.

@@ -1,0 +1,4 @@
+increaseApproval,constructor,,accounts[4],3,,false
+increaseApproval,unpause,instance,,3,,false
+increaseApproval,increaseApproval,instance,accounts[9] 342,5,,false
+increaseApproval,increaseApproval,instance,accounts[9] 293,5,,true

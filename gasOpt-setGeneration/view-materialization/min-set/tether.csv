@@ -1,0 +1,8 @@
+spentTotal,allowanceTotal,paused,allRedeem,maxFee,balanceOf,transferWithFee,isBlackListed,rate,allIssue,totalBalances,owner,transferFromWithFee,,allowance,totalSupply
+paused,allowance,totalSupply,maxFee,balanceOf,transferWithFee,isBlackListed,rate,totalBalances,owner,transferFromWithFee,
+spentTotal,totalOut,allIssue,totalBalances,allowanceTotal,totalIn,allRedeem,paused,totalIssue,maxFee,totalRedeem,transferWithFee,isBlackListed,rate,owner,transferFromWithFee,,allowance,balanceOf,totalSupply
+totalOut,allIssue,totalBalances,allowance,totalIn,allRedeem,paused,totalIssue,maxFee,totalRedeem,transferWithFee,isBlackListed,rate,owner,transferFromWithFee,,balanceOf,totalSupply
+spentTotal,allowanceTotal,paused,totalSupply,maxFee,balanceOf,transferWithFee,isBlackListed,rate,totalBalances,owner,transferFromWithFee,,allowance
+paused,allRedeem,allowance,maxFee,balanceOf,transferWithFee,isBlackListed,rate,allIssue,totalBalances,owner,transferFromWithFee,,totalSupply
+totalIn,totalRedeem,paused,totalIssue,maxFee,totalOut,totalSupply,allowance,transferWithFee,isBlackListed,rate,totalBalances,owner,transferFromWithFee,,balanceOf
+spentTotal,totalSupply,totalOut,totalBalances,allowanceTotal,totalIn,paused,totalIssue,totalRedeem,maxFee,transferWithFee,isBlackListed,rate,owner,transferFromWithFee,,allowance,balanceOf
